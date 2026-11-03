@@ -409,7 +409,14 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
                       <Spine title={f.title} />
                     </div>
                     <div className={`${styles.face} ${styles.cover}`}>
-                      <Cover title={f.title} year={f.year} directorName={f.directorName} />
+                      <Cover
+                        title={f.title}
+                        year={f.year}
+                        directorName={f.directorName}
+                        poster={f.poster}
+                        sizes="240px"
+                        eager
+                      />
                     </div>
                   </div>
                 );

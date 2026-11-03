@@ -52,7 +52,11 @@ type RawMovie = {
   title: string;
   release_date?: string;
   vote_count?: number;
+  poster_path?: string | null;
 };
+
+/** Poster URL at a size that stays sharp on the film page's big box on retina screens. */
+const posterUrl = (m: RawMovie) => (m.poster_path ? `${IMG}/w500${m.poster_path}` : undefined);
 
 type RawPage = { results: RawMovie[] };
 
@@ -140,6 +144,7 @@ const toCard = (m: RawMovie, directorName?: string): FilmCard => ({
   title: m.title,
   year: yearOf(m),
   directorName,
+  poster: posterUrl(m),
 });
 
 const cards = (movies: RawMovie[]) => movies.filter((m) => yearOf(m) > 0).map((m) => toCard(m));
@@ -193,6 +198,7 @@ function toFilm(m: RawDetails, staffNote?: string): Film {
     title: m.title,
     year: yearOf(m),
     directorName: directors.map((d) => d.name).join(" & ") || undefined,
+    poster: posterUrl(m),
     details: {
       originalTitle: m.original_title && m.original_title !== m.title ? m.original_title : undefined,
       runtime: m.runtime ?? 0,
@@ -317,6 +323,7 @@ export async function tmdbDailyPicks(): Promise<PickCard[]> {
         title: film.title,
         year: film.year,
         directorName: film.directorName,
+        poster: film.poster,
         originalTitle: d.originalTitle,
         runtime: d.runtime,
         genres: d.genres,

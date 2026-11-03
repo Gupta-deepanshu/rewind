@@ -88,7 +88,14 @@ async function Film({ params }: Pick<PageProps<"/films/[slug]">, "params">) {
       <section className={`page ${styles.hero}`}>
         <div className={styles.boxCol}>
           <div className={styles.box}>
-            <Cover title={film.title} year={film.year} directorName={film.directorName} />
+            <Cover
+              title={film.title}
+              year={film.year}
+              directorName={film.directorName}
+              poster={film.poster}
+              sizes="(max-width: 767px) 230px, 300px"
+              eager
+            />
           </div>
           {d && (
             <a className={`lbl ${styles.flip}`} href="#back">
