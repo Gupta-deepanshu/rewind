@@ -107,9 +107,14 @@
   min-height: 2.9em;
 }
 
-.note figcaption {
+.reason {
   font-size: 10px;
   color: var(--muted);
+  line-height: 1.45;
+}
+
+.reason > span {
+  white-space: normal;
 }
 
 .actions {

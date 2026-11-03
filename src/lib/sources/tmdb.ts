@@ -100,18 +100,6 @@ async function movieOrNull(id: number): Promise<RawDetails | null> {
   }
 }
 
-async function movie(id: number): Promise<RawDetails> {
-  const m = await movieOrNull(id);
-  if (!m) throw new Error(`TMDB has no film ${id}`);
-  return m;
-}
-
-async function findMovieId(title: string, year: number): Promise<number | undefined> {
-  "use cache";
-  cacheLife("weeks");
-  const page = await tmdb<RawPage>("/search/movie", { query: title, year, include_adult: "false" });
-  return page.results[0]?.id;
-}
 
 async function list(path: string, params: Record<string, string | number>): Promise<RawMovie[]> {
   "use cache";
@@ -240,13 +228,90 @@ async function directed(personId: number): Promise<{ name: string; films: FilmCa
 
 /* ---------- what the catalog asks for ---------- */
 
-export async function tmdbStaffPicks(seeds: { title: string; year: number; staffNote: string }[]): Promise<PickCard[]> {
+/** A small seeded random number generator (mulberry32): the same seed gives the same sequence. */
+function seededRandom(seed: string): () => number {
+  let a = 0;
+  for (let i = 0; i < seed.length; i++) a = (Math.imul(a, 31) + seed.charCodeAt(i)) | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle<T>(xs: T[], rand: () => number): T[] {
+  const out = [...xs];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+const TOP_RATED_PICKS = 5;
+const TRENDING_PICKS = 3;
+const TOP_RATED_PAGES = 25; // the top 500 films
+
+/**
+ * Today's picks, chosen automatically: 5 from TMDB's top-rated films (spread across decades)
+ * and 3 from this week's trending films.
+ *
+ * The date seeds the random choice, so everyone sees the same 8 films all day. The result is
+ * cached for an hour; after midnight (UTC) the next refresh picks a new set.
+ */
+export async function tmdbDailyPicks(): Promise<PickCard[]> {
+  "use cache";
+  cacheLife("hours");
+
+  const day = new Date().toISOString().slice(0, 10);
+  const rand = seededRandom(day);
+  const pageA = 1 + Math.floor(rand() * TOP_RATED_PAGES);
+  const pageB = 1 + ((pageA + Math.floor(rand() * (TOP_RATED_PAGES - 1))) % TOP_RATED_PAGES);
+
+  const [topA, topB, trending] = await Promise.all([
+    list("/movie/top_rated", { page: pageA }),
+    list("/movie/top_rated", { page: pageB }),
+    list("/trending/movie/week", {}),
+  ]);
+
+  // top-rated: prefer one film per decade so the shelf mixes eras
+  const chosen: { movie: RawMovie; from: "top" | "trending" }[] = [];
+  const taken = new Set<number>();
+  const decades = new Set<number>();
+  const topPool = shuffle([...topA, ...topB], rand).filter((m) => yearOf(m) > 0);
+  for (const pass of [true, false]) {
+    for (const m of topPool) {
+      if (chosen.length >= TOP_RATED_PICKS) break;
+      const decade = Math.floor(yearOf(m) / 10) * 10;
+      if (taken.has(m.id) || (pass && decades.has(decade))) continue;
+      chosen.push({ movie: m, from: "top" });
+      taken.add(m.id);
+      decades.add(decade);
+    }
+  }
+  // trending: only films that are out and have some votes
+  for (const m of shuffle(trending, rand)) {
+    if (chosen.length >= TOP_RATED_PICKS + TRENDING_PICKS) break;
+    if (taken.has(m.id) || yearOf(m) === 0 || (m.vote_count ?? 0) < 50) continue;
+    chosen.push({ movie: m, from: "trending" });
+    taken.add(m.id);
+  }
+
   const picks = await Promise.all(
-    seeds.map(async (seed): Promise<PickCard | undefined> => {
-      const id = await findMovieId(seed.title, seed.year);
-      if (!id) return undefined;
-      const film = toFilm(await movie(id), seed.staffNote);
+    shuffle(chosen, rand).map(async ({ movie: m, from }): Promise<PickCard | undefined> => {
+      const raw = await movieOrNull(m.id);
+      if (!raw) return undefined;
+      const film = toFilm(raw);
       const d = film.details!;
+      const votes = d.voteCount ? `${d.voteCount.toLocaleString("en")} viewers` : "";
+      const rated = d.rating !== undefined && votes ? `rated ${d.rating.toFixed(1)} / 10 by ${votes}` : "";
+      const reason =
+        from === "trending"
+          ? ["Trending this week", rated].filter(Boolean).join(" · ")
+          : [rated && rated[0].toUpperCase() + rated.slice(1), `one of the best-loved films of the ${Math.floor(film.year / 10) * 10}s`]
+              .filter(Boolean)
+              .join(" · ");
       return {
         slug: film.slug,
         title: film.title,
@@ -256,7 +321,8 @@ export async function tmdbStaffPicks(seeds: { title: string; year: number; staff
         runtime: d.runtime,
         genres: d.genres,
         synopsis: d.synopsis,
-        staffNote: seed.staffNote,
+        note: d.tagline,
+        reason,
         starring: d.cast.slice(0, 2).map((c) => c.name),
       };
     }),

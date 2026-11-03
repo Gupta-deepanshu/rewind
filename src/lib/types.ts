@@ -49,7 +49,10 @@ export type PickCard = FilmCard & {
   runtime: number;
   genres: string[];
   synopsis: string;
-  staffNote: string;
+  /** The quote on the note card: the film's tagline (TMDB) or a staff note (example data). Can be empty. */
+  note: string;
+  /** The small line under the note: why this film is on today's shelf. */
+  reason: string;
   starring: string[];
 };
 

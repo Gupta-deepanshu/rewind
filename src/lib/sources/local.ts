@@ -56,17 +56,10 @@ export function localStaffPicks(): PickCard[] {
       runtime: d.runtime,
       genres: d.genres,
       synopsis: d.synopsis,
-      staffNote: d.staffNote ?? "",
+      note: d.staffNote ?? "",
+      reason: "Why we picked it",
       starring: d.cast.slice(0, 2).map((c) => c.name),
     };
-  });
-}
-
-/** Title, year and note for each staff pick, so the TMDB source can look them up. */
-export function localStaffSeeds(): { title: string; year: number; staffNote: string }[] {
-  return STAFF_PICKS.map((slug) => {
-    const f = films.get(slug)!;
-    return { title: f.title, year: f.year, staffNote: f.details?.staffNote ?? "" };
   });
 }
 

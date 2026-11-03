@@ -27,8 +27,8 @@ export function SiteFooter() {
         </div>
         <div className={styles.col}>
           <span className="lbl">Browse</span>
-          <Link className="lbl" href="/#staff-picks">
-            Staff Picks
+          <Link className="lbl" href="/#todays-picks">
+            Today’s Picks
           </Link>
           <Link className="lbl" href="/#directors">
             Directors
