@@ -34,7 +34,12 @@ async function tmdb<T>(path: string, params: Record<string, string | number> = {
   if (token) headers.authorization = `Bearer ${token}`;
   else url.searchParams.set("api_key", process.env.TMDB_API_KEY ?? "");
 
+  const started = Date.now();
   const res = await fetch(url, { headers });
+  if (process.env.NODE_ENV === "development") {
+    // Shows each real TMDB call in the terminal running `npm run dev`. Cached answers don't call TMDB, so they don't print.
+    console.log(`[tmdb] ${res.status} ${path} (${Date.now() - started}ms)`);
+  }
   if (res.status === 404) throw new TmdbNotFound(path);
   if (!res.ok) throw new Error(`TMDB ${path} answered ${res.status}`);
   return (await res.json()) as T;
