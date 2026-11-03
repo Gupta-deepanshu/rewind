@@ -1,0 +1,115 @@
+.spine {
+  width: 5em;
+  height: 29.6em;
+  border-radius: 0.2em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8em 0 0.9em;
+  background-image: var(--grain);
+  background-size: 24em;
+  background-blend-mode: multiply;
+  box-shadow:
+    inset 0 0 0 0.1em rgba(20, 20, 20, 0.28),
+    inset -0.3em 0 0.6em rgba(0, 0, 0, 0.22),
+    inset 0.2em 0 0 rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.mark {
+  width: 3em;
+  height: 3em;
+  flex: none;
+  background-color: var(--accent);
+}
+
+.sun {
+  border-radius: 50%;
+}
+
+.stripes {
+  height: 2.4em;
+  background: repeating-linear-gradient(0deg, var(--accent) 0 0.3em, transparent 0.3em 0.6em);
+}
+
+.peak {
+  clip-path: polygon(50% 8%, 100% 100%, 0 100%);
+}
+
+.bar {
+  width: 3.4em;
+  height: 1em;
+}
+
+.title {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1em 0;
+  overflow: hidden;
+}
+
+.title span {
+  writing-mode: vertical-rl;
+  font-family: var(--display);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brand {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.6em;
+  letter-spacing: 0.18em;
+}
+
+.vhs {
+  font-family: var(--display);
+  font-size: 1.1em;
+  line-height: 1;
+  padding: 0.18em 0.27em 0.09em;
+  border: 0.09em solid currentColor;
+  margin-top: 0.36em;
+}
+
+.ink {
+  background-color: #1d1c19;
+  color: #efe7d6;
+  --accent: #d2452d;
+}
+.cream {
+  background-color: #e4d9c3;
+  color: #18171a;
+  --accent: #1f3fb0;
+}
+.cobalt {
+  background-color: #1f3fb0;
+  color: #f1eadb;
+  --accent: #f1eadb;
+}
+.red {
+  background-color: #b83a26;
+  color: #f3ead8;
+  --accent: #1d1c19;
+}
+.forest {
+  background-color: #22463a;
+  color: #ede4cf;
+  --accent: #d9b35a;
+}
+.mustard {
+  background-color: #c9a24a;
+  color: #18171a;
+  --accent: #b83a26;
+}

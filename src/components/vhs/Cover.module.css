@@ -1,0 +1,206 @@
+.cover {
+  width: 17.6em;
+  height: 33.4em;
+  border-radius: 0.2em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.3em 1.1em 1.1em;
+  background-color: #e8dfcc;
+  background-image: var(--grain);
+  background-size: 24em;
+  background-blend-mode: multiply;
+  color: #141414;
+  box-shadow:
+    inset 0 0 0 0.1em rgba(20, 20, 20, 0.25),
+    inset 0 0 1.8em rgba(80, 60, 30, 0.25);
+  overflow: hidden;
+}
+
+.by {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.72em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.title {
+  font-family: var(--display);
+  line-height: 0.88;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--title);
+  margin-top: 0.22em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.art {
+  flex: 1;
+  width: 100%;
+  margin: 0.9em 0 0.7em;
+}
+
+.foot {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.year {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.72em;
+  letter-spacing: 0.14em;
+}
+
+.vhs {
+  font-family: var(--display);
+  font-size: 1.3em;
+  line-height: 1;
+  padding: 0.15em 0.25em 0.05em;
+  border: 0.12em solid currentColor;
+}
+
+/* palettes: --title, --sun (big shape), --ink, --second */
+.ink,
+.cream,
+.cobalt {
+  --title: #1f3fb0;
+  --sun: #d2452d;
+  --ink: #141414;
+  --second: #1f3fb0;
+}
+.red {
+  --title: #b83a26;
+  --sun: #1f3fb0;
+  --ink: #141414;
+  --second: #b83a26;
+}
+.forest {
+  --title: #22463a;
+  --sun: #d9b35a;
+  --ink: #141414;
+  --second: #22463a;
+}
+.mustard {
+  --title: #141414;
+  --sun: #c9a24a;
+  --ink: #141414;
+  --second: #b83a26;
+}
+
+/* ---- art ---- */
+.artBox {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.artBox > div {
+  position: absolute;
+}
+
+/* peaks: sun over two mountains and striped ground */
+.peaks .a {
+  width: 9.5em;
+  height: 9.5em;
+  border-radius: 50%;
+  background: var(--sun);
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+}
+.peaks .b {
+  left: -10%;
+  right: 30%;
+  bottom: 22%;
+  height: 46%;
+  background: var(--ink);
+  clip-path: polygon(0 100%, 38% 18%, 52% 46%, 70% 8%, 100% 100%);
+}
+.peaks .c {
+  left: 35%;
+  right: -12%;
+  bottom: 22%;
+  height: 34%;
+  background: var(--second);
+  clip-path: polygon(0 100%, 46% 10%, 100% 100%);
+}
+.peaks .d {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22%;
+  background: repeating-linear-gradient(0deg, var(--ink) 0 0.2em, transparent 0.2em 0.6em);
+}
+
+/* sea: moon, waves and a small sail */
+.sea .a {
+  width: 7.5em;
+  height: 7.5em;
+  border-radius: 50%;
+  background: var(--sun);
+  right: 10%;
+  top: 8%;
+}
+.sea .b {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48%;
+  background: repeating-linear-gradient(0deg, var(--second) 0 0.35em, transparent 0.35em 0.8em);
+}
+.sea .c {
+  left: 22%;
+  bottom: 40%;
+  width: 3.2em;
+  height: 5em;
+  background: var(--ink);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.sea .d {
+  left: 0;
+  right: 0;
+  bottom: 46%;
+  height: 0.25em;
+  background: var(--ink);
+}
+
+/* city: sun behind a skyline */
+.city .a {
+  width: 10em;
+  height: 10em;
+  border-radius: 50%;
+  background: var(--sun);
+  left: 50%;
+  top: 6%;
+  transform: translateX(-50%);
+}
+.city .b {
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  height: 52%;
+  background: var(--ink);
+  clip-path: polygon(0 100%, 0 40%, 12% 40%, 12% 20%, 24% 20%, 24% 55%, 34% 55%, 34% 8%, 46% 8%, 46% 46%, 58% 46%, 58% 28%, 70% 28%, 70% 60%, 80% 60%, 80% 34%, 92% 34%, 92% 50%, 100% 50%, 100% 100%);
+}
+.city .c {
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  height: 52%;
+  background: repeating-linear-gradient(90deg, transparent 0 0.9em, var(--sun) 0.9em 1.1em);
+  opacity: 0.35;
+  clip-path: polygon(0 100%, 0 40%, 12% 40%, 12% 20%, 24% 20%, 24% 55%, 34% 55%, 34% 8%, 46% 8%, 46% 46%, 58% 46%, 58% 28%, 70% 28%, 70% 60%, 80% 60%, 80% 34%, 92% 34%, 92% 50%, 100% 50%, 100% 100%);
+}
+.city .d {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 18%;
+  background: var(--second);
+}

@@ -1,26 +1,186 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #edebe6;
+  --sheet: #f4f2ed;
+  --ink: #141414;
+  --muted: #6d6a63;
+  --cobalt: #1f3fb0;
+  --cobalt-light: #9fb2f2;
+  --vermilion: #d2452d;
+  --rule: rgba(20, 20, 20, 0.9);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --grain: url("/grain.svg");
+
+  --sans: var(--font-inter-tight), var(--font-noto-jp), system-ui, sans-serif;
+  --serif: var(--font-newsreader), Georgia, serif;
+  --display: var(--font-instrument), Georgia, serif;
+
+  --page: 1360px;
+  --gutter: 40px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (max-width: 767px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --gutter: 16px;
   }
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* paper grain over everything */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  background-image: var(--grain);
+  background-size: 240px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--cobalt);
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+/* the small uppercase catalogue label used everywhere */
+.lbl {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.page {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* buttons */
+.btn {
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px;
+  border: 1px solid var(--cobalt);
+  background: transparent;
+  color: var(--cobalt);
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.btn:hover {
+  background: var(--cobalt);
+  color: #fff;
+}
+
+.btn-solid {
+  background: var(--cobalt);
+  color: #fff;
+}
+
+.btn-solid:hover {
+  background: #17318f;
+  color: #fff;
+}
+
+.chip {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.chip:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* the shelf board tapes stand on */
+.ledge {
+  height: 14px;
+  background: #d9d3c7;
+  border-top: 1px solid var(--rule);
+  box-shadow: 0 22px 30px -20px rgba(20, 16, 10, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+  }
 }

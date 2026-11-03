@@ -1,0 +1,9 @@
+.mask {
+  overflow: hidden;
+  display: grid;
+}
+
+.mask > span {
+  grid-area: 1 / 1;
+  display: block;
+}

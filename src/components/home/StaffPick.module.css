@@ -1,0 +1,281 @@
+.hero {
+  --H: min(44vh, 28vw, 380px);
+  display: flex;
+  flex-wrap: wrap;
+  /* top-aligned, so text changing height never moves the shelf or the column */
+  align-items: flex-start;
+  gap: 40px 48px;
+  padding-top: 48px;
+  padding-bottom: 32px;
+  scroll-margin-top: 24px;
+}
+
+.info {
+  flex: 1 1 400px;
+  min-width: 0;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kicker {
+  color: var(--cobalt);
+}
+
+.live {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(40px, 4.4vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  padding-bottom: 0.08em;
+  /* room for two lines, so the column doesn't jump as titles change */
+  min-height: 2.08em;
+  align-content: end;
+}
+
+.meta {
+  color: var(--muted);
+}
+
+.synopsis {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.5;
+  max-width: 42ch;
+  min-height: 4.5em;
+}
+
+.facts dd {
+  min-width: 0;
+}
+
+.facts dd span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px 16px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.facts dt {
+  color: var(--muted);
+  align-self: center;
+}
+
+.note {
+  margin: 0;
+  border: 1px solid var(--rule);
+  padding: 16px 18px;
+  background: var(--sheet);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: rotate(-1deg);
+  max-width: 420px;
+}
+
+.quote {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.45;
+  min-height: 2.9em;
+}
+
+.note figcaption {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* ---- 3D shelf ---- */
+.shelfCol {
+  flex: 999 1 560px;
+  min-width: 0;
+  padding-top: 24px;
+}
+
+.window {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.shelf {
+  position: relative;
+  height: calc(var(--H) + 120px);
+  perspective: 2200px;
+  perspective-origin: 50% 50%;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  outline-offset: -2px;
+}
+
+.shelf[data-oncover="1"] {
+  cursor: pointer;
+}
+
+.probe {
+  position: absolute;
+  width: 1px;
+  height: var(--H);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+
+.tape {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.face {
+  position: absolute;
+  height: var(--Hpx);
+  top: calc(var(--Hpx) / -2);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 2px;
+}
+
+.face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #000;
+  opacity: var(--shade, 0);
+  pointer-events: none;
+}
+
+.spine {
+  width: var(--ws);
+  left: calc(var(--ws) / -2);
+  transform: translateZ(calc(var(--d) / 2));
+  font-size: calc(var(--ws) / 5);
+}
+
+.cover {
+  width: var(--d);
+  left: calc(var(--d) / -2);
+  transform: rotateY(90deg) translateZ(calc(var(--ws) / 2));
+  font-size: calc(var(--d) / 17.6);
+  /* only the box that is turned out casts a shadow */
+  box-shadow: 0 30px 60px -28px rgba(20, 16, 10, var(--shadow, 0));
+}
+
+.ledge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% + var(--H) / 2);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.count {
+  color: var(--muted);
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.arrow {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  background: transparent;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.arrow:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.arrow svg {
+  width: 18px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+
+/* the paper sheet that grows out of the cover when a film opens */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--paper);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .hero {
+    --H: min(60vw, 40svh);
+    padding-top: 28px;
+  }
+  .shelfCol {
+    order: -1;
+  }
+  .synopsis {
+    font-size: 17px;
+  }
+}

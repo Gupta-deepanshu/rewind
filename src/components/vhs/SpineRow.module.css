@@ -1,0 +1,53 @@
+.wrap {
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-top: 26px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.row li {
+  flex: none;
+}
+
+.md {
+  font-size: 10px;
+}
+
+.sm {
+  font-size: 7.6px;
+  gap: 5px;
+}
+
+.tape {
+  display: block;
+  color: inherit;
+  transition: transform 0.45s var(--ease);
+}
+
+.tape:hover,
+.tape:focus-visible {
+  transform: translateY(-14px);
+  color: inherit;
+}
+
+.tape:focus-visible {
+  outline-offset: 3px;
+}
+
+.darkLedge {
+  height: 10px;
+  background: #3a3833;
+  border-top: 1px solid var(--muted);
+}
