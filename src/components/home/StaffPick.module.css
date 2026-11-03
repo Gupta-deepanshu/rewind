@@ -41,12 +41,42 @@
   font-family: var(--serif);
   font-weight: 400;
   font-size: clamp(40px, 4.4vw, 64px);
-  line-height: 1;
+  /* a little taller than 1 so a clamped third line can't peek out under the second */
+  line-height: 1.12;
   letter-spacing: -0.025em;
-  padding-bottom: 0.08em;
-  /* room for two lines, so the column doesn't jump as titles change */
-  min-height: 2.08em;
+  /* exactly two lines, so the page below never moves as picks change */
+  height: 2.24em;
   align-content: end;
+}
+
+/*
+ * Every changing line has a fixed height and is clamped with "…", so the column is the same
+ * height for every film. Without this, a long title or synopsis pushes the rest of the page down.
+ */
+.info .title > span,
+.info .synopsis > span,
+.info .quote > span,
+.info .reason > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.info .title > span,
+.info .quote > span,
+.info .reason > span {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.info .synopsis > span {
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.info .meta > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .meta {
@@ -58,7 +88,7 @@
   font-size: 18px;
   line-height: 1.5;
   max-width: 42ch;
-  min-height: 4.5em;
+  height: 6em; /* four lines */
 }
 
 .facts dd {
@@ -104,13 +134,14 @@
   font-style: italic;
   font-size: 16px;
   line-height: 1.45;
-  min-height: 2.9em;
+  height: 2.9em; /* two lines */
 }
 
 .reason {
   font-size: 10px;
   color: var(--muted);
   line-height: 1.45;
+  height: 2.9em; /* two lines */
 }
 
 .reason > span {
