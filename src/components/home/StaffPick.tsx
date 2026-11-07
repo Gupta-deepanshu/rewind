@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { PickCard } from "@/lib/types";
+import { Mark, MarkerText } from "../site/MarkerText";
+import { ParticleButton, ParticleLink } from "../site/ParticleButton";
 import { Cover } from "../vhs/Cover";
 import { Spine } from "../vhs/Spine";
 import { MaskText } from "./MaskText";
@@ -94,8 +95,37 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
       stage.style.setProperty("--d", `${d}px`);
     };
     measure();
-    const resize = new ResizeObserver(measure);
+    const resize = new ResizeObserver(() => {
+      measure();
+      wake();
+    });
     resize.observe(shelf);
+
+    /*
+     * The frame loop only runs while something is moving, and never while the shelf is off
+     * screen: an always-on loop that measures and rewrites every tape each frame competes with
+     * the page's smooth scroll. Anything that can move the shelf calls wake().
+     */
+    let raf = 0;
+    let running = false;
+    let onScreen = true;
+    let last = performance.now();
+    const wake = () => {
+      if (running || !onScreen) return;
+      running = true;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+    const sleep = () => {
+      cancelAnimationFrame(raf);
+      running = false;
+    };
+    const visibility = new IntersectionObserver(([entry]) => {
+      onScreen = entry?.isIntersecting ?? true;
+      if (onScreen) wake();
+      else sleep();
+    });
+    visibility.observe(shelf);
 
     /* state: s = scroll position in tapes, T = target.
        First visit: start on the first pick and glide to a random one. Coming back: resume. */
@@ -121,6 +151,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
       let delta = mod(i - mod(c, N), N);
       if (delta > N / 2) delta -= N;
       T = c + delta;
+      wake();
     };
 
     const nearest = () => tapes.reduce((a, b) => (Math.abs(b.r) < Math.abs(a.r) ? b : a));
@@ -128,6 +159,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
     const open = () => {
       if (opening) return;
       T = Math.round(T);
+      wake();
       const href = `/films/${picks[mod(Math.round(s), N)].slug}`;
       if (reduce) {
         router.push(href);
@@ -163,6 +195,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
     controls.current = {
       step: (delta) => {
         T = Math.round(T) + delta;
+        wake();
       },
       random: () => {
         let i = shown;
@@ -176,6 +209,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
     const onMove = (e: PointerEvent) => {
       mx = e.clientX;
       my = e.clientY;
+      wake(); // the cover tilts toward the pointer
       if (!down) return;
       const dx = e.clientX - x0;
       if (!dragging && Math.abs(dx) > 5) dragging = true;
@@ -187,10 +221,12 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
       dragging = false;
       x0 = e.clientX;
       T0 = T;
+      wake();
     };
     const onUp = () => {
       if (!down) return;
       down = false;
+      wake();
       if (dragging) {
         dragging = false;
         T = Math.round(T);
@@ -203,8 +239,12 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
       e.preventDefault();
       T += (e.deltaX / (ws + gap)) * 0.5;
+      wake();
       clearTimeout(wheelTimer);
-      wheelTimer = window.setTimeout(() => (T = Math.round(T)), 160);
+      wheelTimer = window.setTimeout(() => {
+        T = Math.round(T);
+        wake();
+      }, 160);
     };
     shelf.addEventListener("pointerdown", onDown);
     shelf.addEventListener("wheel", onWheel, { passive: false });
@@ -213,14 +253,21 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
     addEventListener("pointercancel", onUp);
 
     const cleanups = tapes.map((t) => {
-      const enter = () => (hover = t.v);
+      const enter = () => {
+        hover = t.v;
+        wake();
+      };
       const leave = () => {
         if (hover === t.v) hover = -1;
+        wake();
       };
       const click = () => {
         if (suppressClick || opening) return;
         if (Math.abs(t.r) < 0.5) open();
-        else T = Math.round(T + t.r);
+        else {
+          T = Math.round(T + t.r);
+          wake();
+        }
       };
       t.el.addEventListener("pointerenter", enter);
       t.el.addEventListener("pointerleave", leave);
@@ -232,9 +279,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
       };
     });
 
-    /* the frame loop */
-    let last = performance.now();
-    let raf = 0;
+    /* the frame loop (started by wake(), see above) */
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
@@ -271,6 +316,9 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
       const ease = 1 - Math.exp(-7 * dt);
       tiltY += (tyTarget - tiltY) * ease;
       tiltX += (txTarget - tiltX) * ease;
+      // still easing toward somewhere? (each tape's lift is checked below too)
+      let moving =
+        dragging || opening || s !== T || Math.abs(tyTarget - tiltY) > 0.01 || Math.abs(txTarget - tiltX) > 0.01;
 
       const liftEase = reduce ? 1 : 1 - Math.exp(-12 * dt);
       const step = ws + gap;
@@ -283,6 +331,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
         const x = r * step + spread * push(r);
         const liftTarget = hover === t.v && Math.abs(r) > 0.5 && !opening ? 1 : 0;
         t.lift += (liftTarget - t.lift) * liftEase;
+        if (Math.abs(liftTarget - t.lift) > 0.001) moving = true;
 
         if (Math.abs(x) > limit) {
           if (t.visible) {
@@ -310,15 +359,17 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
         t.cv.style.setProperty("--shadow", (o * 0.55).toFixed(3));
       }
 
-      raf = requestAnimationFrame(frame);
+      if (moving) raf = requestAnimationFrame(frame);
+      else running = false; // everything has settled: sleep until wake()
     };
-    raf = requestAnimationFrame(frame);
+    wake();
 
     return () => {
       saved.current = Math.round(T);
-      cancelAnimationFrame(raf);
+      sleep();
       clearTimeout(wheelTimer);
       resize.disconnect();
+      visibility.disconnect();
       shelf.removeEventListener("pointerdown", onDown);
       shelf.removeEventListener("wheel", onWheel);
       removeEventListener("pointermove", onMove);
@@ -339,10 +390,13 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
     <section id="todays-picks" className={`page ${styles.hero}`} aria-label="Today's picks">
       <div className={styles.info}>
         <div className={styles.head}>
-          <span className={`lbl ${styles.kicker}`}>Today’s pick / 今日のおすすめ</span>
-          <button type="button" className="lbl chip" onClick={() => controls.current?.random()}>
+          {/* redrawn by hand each time the pick changes, like a clerk re-marking the shelf tag */}
+          <MarkerText key={pick.slug} as="span" className={`lbl ${styles.kicker}`}>
+            <Mark type="underline">Today’s pick</Mark>
+          </MarkerText>
+          <ParticleButton className="lbl chip" onClick={() => controls.current?.random()}>
             ↻ Another pick
-          </button>
+          </ParticleButton>
         </div>
         <div aria-live="polite" className={styles.live}>
           <MaskText as="h1" className={styles.title} text={pick.title} dir={dir} />
@@ -370,9 +424,9 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
           />
         </figure>
         <div className={styles.actions}>
-          <Link className="lbl btn btn-solid" href={`/films/${pick.slug}`}>
+          <ParticleLink className="lbl btn btn-solid" href={`/films/${pick.slug}`}>
             Full film details →
-          </Link>
+          </ParticleLink>
         </div>
       </div>
 
@@ -407,7 +461,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
                     }}
                   >
                     <div className={`${styles.face} ${styles.spine}`}>
-                      <Spine title={f.title} />
+                      <Spine title={f.title} year={f.year} fixedSize />
                     </div>
                     <div className={`${styles.face} ${styles.cover}`}>
                       <Cover

@@ -19,7 +19,7 @@
 
 .sign:hover {
   background: var(--cobalt);
-  color: #fff;
+  color: var(--on-cobalt);
 }
 
 .num {
@@ -50,12 +50,6 @@
   font-size: 36px;
   line-height: 1;
   letter-spacing: -0.015em;
-}
-
-.jp {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--cobalt);
 }
 
 .count {

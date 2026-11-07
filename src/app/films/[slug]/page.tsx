@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackOfBox } from "@/components/film/BackOfBox";
+import { BoxBack } from "@/components/film/BoxBack";
+import { FlipBox } from "@/components/film/FlipBox";
+import { ParticleLink } from "@/components/site/ParticleButton";
 import { Cover } from "@/components/vhs/Cover";
 import { SpineRow } from "@/components/vhs/SpineRow";
 import { getFilmPage, getPrebuiltSlugs } from "@/lib/catalog";
@@ -61,6 +64,17 @@ async function Film({ params }: Pick<PageProps<"/films/[slug]">, "params">) {
     d?.colour ?? "",
   ].filter(Boolean);
 
+  const cover = (
+    <Cover
+      title={film.title}
+      year={film.year}
+      directorName={film.directorName}
+      poster={film.poster}
+      sizes="(max-width: 767px) 230px, 300px"
+      eager
+    />
+  );
+
   return (
     <>
       <nav aria-label="Breadcrumb" className={`page ${styles.crumbs}`}>
@@ -87,20 +101,15 @@ async function Film({ params }: Pick<PageProps<"/films/[slug]">, "params">) {
 
       <section className={`page ${styles.hero}`}>
         <div className={styles.boxCol}>
-          <div className={styles.box}>
-            <Cover
-              title={film.title}
-              year={film.year}
-              directorName={film.directorName}
-              poster={film.poster}
-              sizes="(max-width: 767px) 230px, 300px"
-              eager
+          {d ? (
+            <FlipBox
+              className={styles.box}
+              label={`VHS box of ${film.title}`}
+              front={cover}
+              back={<BoxBack film={film} details={d} />}
             />
-          </div>
-          {d && (
-            <a className={`lbl ${styles.flip}`} href="#back">
-              ↻ Turn to the back of the box
-            </a>
+          ) : (
+            <div className={`${styles.box} ${styles.boxShadow}`}>{cover}</div>
           )}
         </div>
 
@@ -162,13 +171,13 @@ async function Film({ params }: Pick<PageProps<"/films/[slug]">, "params">) {
               </dl>
               <div className={styles.actions}>
                 {d.trailerUrl && (
-                  <a className="lbl btn btn-solid" href={d.trailerUrl} target="_blank" rel="noreferrer">
+                  <ParticleLink className="lbl btn btn-solid" href={d.trailerUrl} target="_blank" rel="noreferrer">
                     ▶ Watch trailer
-                  </a>
+                  </ParticleLink>
                 )}
-                <a className={`lbl btn ${d.trailerUrl ? "" : "btn-solid"}`} href="#back">
+                <ParticleLink className={`lbl btn ${d.trailerUrl ? "" : "btn-solid"}`} href="#back">
                   Cast &amp; credits ↓
-                </a>
+                </ParticleLink>
               </div>
             </>
           ) : (

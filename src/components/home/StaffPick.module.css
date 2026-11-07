@@ -243,7 +243,7 @@
   transform: rotateY(90deg) translateZ(calc(var(--ws) / 2));
   font-size: calc(var(--d) / 17.6);
   /* only the box that is turned out casts a shadow */
-  box-shadow: 0 30px 60px -28px rgba(20, 16, 10, var(--shadow, 0));
+  box-shadow: 0 30px 60px -28px rgba(var(--shadow-rgb), var(--shadow, 0));
 }
 
 .ledge {

@@ -1,0 +1,28 @@
+.root {
+  position: relative;
+  display: inline-block;
+}
+
+/* every layer holds the same text in the same grid cell, so they sit exactly on top of each other */
+.layers {
+  position: relative;
+  display: inline-grid;
+}
+
+.layer {
+  grid-area: 1 / 1;
+}
+
+.ghost {
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.red {
+  color: var(--glitch-accent);
+}
+
+.cyan {
+  color: oklch(0.78 0.14 205);
+}

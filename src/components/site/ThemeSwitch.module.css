@@ -1,0 +1,72 @@
+.switch {
+  height: 44px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  user-select: none;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.switch:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.icon {
+  flex: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* light: a sun. dark: the bite slides over a grown disc and the rays fold away */
+.bite {
+  translate: 10px -10px;
+}
+
+.disc,
+.ray {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+
+.labels {
+  display: grid;
+  line-height: 1;
+}
+
+.labels > span {
+  grid-area: 1 / 1;
+}
+
+.darkLabel {
+  opacity: 0;
+  filter: blur(3px);
+}
+
+:global(html[data-theme="dark"]) .bite {
+  translate: 0 0;
+}
+
+:global(html[data-theme="dark"]) .disc {
+  scale: 1.8;
+}
+
+:global(html[data-theme="dark"]) .ray {
+  scale: 0.5;
+  opacity: 0;
+}
+
+:global(html[data-theme="dark"]) .lightLabel {
+  opacity: 0;
+  filter: blur(3px);
+}
+
+:global(html[data-theme="dark"]) .darkLabel {
+  opacity: 1;
+  filter: blur(0px);
+}

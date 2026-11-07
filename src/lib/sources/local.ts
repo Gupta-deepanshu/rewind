@@ -16,7 +16,7 @@ import type {
  */
 
 type LocalFilm = { slug: string; title: string; year: number; directorSlug?: string; details?: FilmDetails };
-type LocalDirector = { slug: string; name: string; nativeName?: string; active: [number, number]; films: string[] };
+type LocalDirector = { slug: string; name: string; active: [number, number]; films: string[] };
 
 const films = new Map<string, LocalFilm>();
 const directors = new Map<string, LocalDirector>();
@@ -64,14 +64,13 @@ export function localStaffPicks(): PickCard[] {
 }
 
 export function localAisles(): AisleShelfData[] {
-  return aisles.map((a) => ({ slug: a.slug, num: a.num, name: a.name, jp: a.jp, films: a.films.map(card) }));
+  return aisles.map((a) => ({ slug: a.slug, num: a.num, name: a.name, films: a.films.map(card) }));
 }
 
 export function localDirectors(): DirectorShelfData[] {
   return [...directors.values()].map((d) => ({
     slug: d.slug,
     name: d.name,
-    nativeName: d.nativeName,
     active: d.active,
     films: d.films.map(card),
   }));

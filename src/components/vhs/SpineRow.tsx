@@ -21,7 +21,7 @@ export function SpineRow({
         {films.map((f) => (
           <li key={f.slug}>
             <Link href={`/films/${f.slug}`} className={styles.tape} title={`${f.title} (${f.year})`}>
-              <Spine title={f.title} />
+              <Spine title={f.title} year={f.year} />
               <span className="sr-only">
                 {f.title}, {f.year}
               </span>

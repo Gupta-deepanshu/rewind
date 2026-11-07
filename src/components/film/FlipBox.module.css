@@ -1,0 +1,123 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+/* sized like the cover (17.6em × 33.4em); the parent sets font-size */
+.root {
+  position: relative;
+  width: 17.6em;
+  height: 33.4em;
+  border-radius: 0.2em;
+  perspective: 1400px;
+  user-select: none;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.root:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 10px;
+}
+
+.shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -28px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(var(--shadow-rgb), 0.35);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.tilt {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+  cursor: grab;
+}
+
+.root:active .card {
+  cursor: grabbing;
+}
+
+/* the edge of the case: printed cardboard sleeve over black plastic */
+.slice {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.2em;
+  background: #2a2925;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 0.2em;
+  backface-visibility: hidden;
+}
+
+.light {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+}
+
+.band {
+  width: 33%;
+  height: 220%;
+  flex: none;
+  background: #fff;
+  opacity: 0;
+}
+
+.turn {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.turn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt {
+    transition: none;
+  }
+}
+
+/* the poster is part of the box: grabbing it should turn the box, not drag the image */
+.face img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}

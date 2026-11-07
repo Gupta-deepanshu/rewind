@@ -4,8 +4,9 @@
 }
 
 .panel {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--panel);
+  color: var(--on-panel);
+  box-shadow: inset 0 0 0 1px var(--panel-edge);
   padding: 48px;
   display: flex;
   flex-wrap: wrap;
@@ -22,7 +23,7 @@
 }
 
 .kicker {
-  color: var(--cobalt-light);
+  color: var(--panel-accent);
 }
 
 .name {
@@ -34,14 +35,14 @@
 }
 
 .meta {
-  color: #b9b4aa;
+  color: var(--on-panel-muted);
 }
 
 .copy {
   font-family: var(--serif);
   font-size: 17px;
   line-height: 1.5;
-  color: #dcd7cc;
+  color: var(--on-panel-soft);
 }
 
 .actions {
@@ -54,15 +55,15 @@
 .another {
   height: 44px;
   padding: 0 18px;
-  border: 1px solid var(--paper);
+  border: 1px solid var(--on-panel);
   background: transparent;
-  color: var(--paper);
+  color: var(--on-panel);
   transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
 }
 
 .another:hover {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--on-panel);
+  color: var(--panel);
 }
 
 .shelf {
