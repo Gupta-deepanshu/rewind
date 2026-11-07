@@ -337,17 +337,25 @@ export async function tmdbDailyPicks(): Promise<PickCard[]> {
   return picks.filter((p): p is PickCard => Boolean(p));
 }
 
+/** A TMDB page holds only 20 films, so each shelf reads two pages; the catalog trims it to fit. */
+async function shelf(path: string, params: Record<string, string | number>) {
+  const pages = await Promise.all([1, 2].map((page) => list(path, { ...params, page })));
+  const seen = new Set<number>();
+  const movies = pages.flat().filter((m) => !seen.has(m.id) && Boolean(seen.add(m.id)));
+  return cards(movies);
+}
+
 export async function tmdbAisles(): Promise<AisleShelfData[]> {
   const topRated = { sort_by: "vote_average.desc", "vote_count.gte": 2500 };
   const [now, drama, thriller] = await Promise.all([
-    list("/movie/now_playing", { page: 1 }),
-    list("/discover/movie", { ...topRated, with_genres: "18" }),
-    list("/discover/movie", { ...topRated, with_genres: "53|9648" }),
+    shelf("/movie/now_playing", {}),
+    shelf("/discover/movie", { ...topRated, with_genres: "18" }),
+    shelf("/discover/movie", { ...topRated, with_genres: "53|9648" }),
   ]);
   return [
-    { slug: "new-arrivals", num: "01", name: "New Arrivals", jp: "新作", films: cards(now) },
-    { slug: "drama", num: "02", name: "Drama", jp: "ドラマ", films: cards(drama) },
-    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", jp: "スリラー", films: cards(thriller) },
+    { slug: "new-arrivals", num: "01", name: "New Arrivals", jp: "新作", films: now },
+    { slug: "drama", num: "02", name: "Drama", jp: "ドラマ", films: drama },
+    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", jp: "スリラー", films: thriller },
   ];
 }
 

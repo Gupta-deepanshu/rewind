@@ -46,8 +46,12 @@ export function getTodaysPicks(): Promise<PickCard[]> {
   );
 }
 
-export function getAisles(): Promise<AisleShelfData[]> {
-  return live("aisles", tmdbAisles, localAisles);
+/** Tapes per aisle: as many as fit across the shelf without one being cut off at the edge. */
+const AISLE_TAPES = 23;
+
+export async function getAisles(): Promise<AisleShelfData[]> {
+  const aisles = await live("aisles", tmdbAisles, localAisles);
+  return aisles.map((a) => ({ ...a, films: a.films.slice(0, AISLE_TAPES) }));
 }
 
 export function getDirectorShelves(): Promise<DirectorShelfData[]> {
