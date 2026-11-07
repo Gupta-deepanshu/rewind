@@ -17,7 +17,7 @@ export function SpineRow({
 }) {
   return (
     <div className={`${styles.wrap} ${dark ? styles.dark : ""}`}>
-      <ul className={`${styles.row} ${styles[size]}`} aria-label={label}>
+      <ul className={`${styles.row} ${styles[size]}`} aria-label={label} data-lenis-prevent-horizontal>
         {films.map((f) => (
           <li key={f.slug}>
             <Link href={`/films/${f.slug}`} className={styles.tape} title={`${f.title} (${f.year})`}>

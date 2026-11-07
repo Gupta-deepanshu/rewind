@@ -380,6 +380,7 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
         <div className={styles.window}>
           <div
             ref={shelfRef}
+            data-lenis-prevent-horizontal
             className={styles.shelf}
             tabIndex={0}
             role="group"
