@@ -1,14 +1,14 @@
 /**
  * Directors that can appear on the homepage's director shelf when TMDB is connected.
- * Their filmographies come from TMDB; only the names (and native-script names) live here.
+ * Their filmographies come from TMDB; only the names live here.
  */
-export const DIRECTOR_SEEDS: { name: string; nativeName?: string }[] = [
-  { name: "Akira Kurosawa", nativeName: "黒澤明" },
+export const DIRECTOR_SEEDS: { name: string }[] = [
+  { name: "Akira Kurosawa" },
   { name: "Alfred Hitchcock" },
-  { name: "Yasujirō Ozu", nativeName: "小津安二郎" },
-  { name: "Wong Kar-wai", nativeName: "王家衛" },
+  { name: "Yasujirō Ozu" },
+  { name: "Wong Kar-wai" },
   { name: "Agnès Varda" },
-  { name: "Bong Joon-ho", nativeName: "봉준호" },
+  { name: "Bong Joon-ho" },
   { name: "Céline Sciamma" },
-  { name: "Hayao Miyazaki", nativeName: "宮崎駿" },
+  { name: "Hayao Miyazaki" },
 ];

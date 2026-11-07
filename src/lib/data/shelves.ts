@@ -7,14 +7,12 @@ type Entry = [title: string, year: number];
 export const DIRECTORS: {
   slug: string;
   name: string;
-  nativeName?: string;
   active: [number, number];
   films: Entry[];
 }[] = [
   {
     slug: "akira-kurosawa",
     name: "Akira Kurosawa",
-    nativeName: "黒澤明",
     active: [1943, 1993],
     films: [
       ["Sanshiro Sugata", 1943], ["Drunken Angel", 1948], ["Stray Dog", 1949], ["Rashomon", 1950],
@@ -38,7 +36,6 @@ export const DIRECTORS: {
   {
     slug: "yasujiro-ozu",
     name: "Yasujirō Ozu",
-    nativeName: "小津安二郎",
     active: [1927, 1962],
     films: [
       ["I Was Born, But...", 1932], ["Late Spring", 1949], ["Early Summer", 1951], ["Tokyo Story", 1953],
@@ -49,7 +46,6 @@ export const DIRECTORS: {
   {
     slug: "wong-kar-wai",
     name: "Wong Kar-wai",
-    nativeName: "王家衛",
     active: [1988, 2013],
     films: [
       ["As Tears Go By", 1988], ["Days of Being Wild", 1990], ["Chungking Express", 1994], ["Ashes of Time", 1994],
@@ -71,12 +67,11 @@ export const DIRECTORS: {
   },
 ];
 
-export const AISLES: { slug: string; num: string; name: string; jp: string; films: Entry[] }[] = [
+export const AISLES: { slug: string; num: string; name: string; films: Entry[] }[] = [
   {
     slug: "new-arrivals",
     num: "01",
     name: "New Arrivals",
-    jp: "新作",
     films: [
       ["Past Lives", 2023], ["Aftersun", 2022], ["Oppenheimer", 2023], ["Dune: Part Two", 2024],
       ["Poor Things", 2023], ["Anatomy of a Fall", 2023], ["Perfect Days", 2023], ["The Holdovers", 2023],
@@ -90,7 +85,6 @@ export const AISLES: { slug: string; num: string; name: string; jp: string; film
     slug: "drama",
     num: "02",
     name: "Drama",
-    jp: "ドラマ",
     films: [
       ["Tokyo Story", 1953], ["Bicycle Thieves", 1948], ["Late Spring", 1949], ["The 400 Blows", 1959],
       ["Wild Strawberries", 1957], ["Pather Panchali", 1955], ["Umberto D.", 1952], ["La Strada", 1954],
@@ -104,7 +98,6 @@ export const AISLES: { slug: string; num: string; name: string; jp: string; film
     slug: "thriller-mystery",
     num: "03",
     name: "Thriller & Mystery",
-    jp: "スリラー",
     films: [
       ["Vertigo", 1958], ["Rear Window", 1954], ["Psycho", 1960], ["The Third Man", 1949],
       ["Chinatown", 1974], ["Se7en", 1995], ["Zodiac", 2007], ["Memories of Murder", 2003],

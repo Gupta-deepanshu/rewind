@@ -1,15 +1,18 @@
 import Link from "next/link";
-import { SearchBox } from "./SearchBox";
+import { GlitchText } from "./GlitchText";
+import { SearchPalette } from "./SearchPalette";
+import { ThemeSwitch } from "./ThemeSwitch";
 import styles from "./SiteHeader.module.css";
 
 export function SiteHeader() {
   return (
     <header className={`page ${styles.header}`}>
       <Link href="/" className={styles.logo} aria-label="Rewind film database, home">
-        <span className={styles.mark}>REWIND</span>
+        <span className={styles.mark}>
+          <GlitchText text="REWIND" trigger="hover" intensity="medium" />
+        </span>
         <span className={styles.sub}>
           <span className="lbl">Film Database</span>
-          <span className={styles.jp}>映画データベース</span>
         </span>
       </Link>
       <nav aria-label="Main" className={styles.nav}>
@@ -23,7 +26,10 @@ export function SiteHeader() {
           Directors
         </Link>
       </nav>
-      <SearchBox />
+      <div className={styles.tools}>
+        <SearchPalette />
+        <ThemeSwitch />
+      </div>
     </header>
   );
 }

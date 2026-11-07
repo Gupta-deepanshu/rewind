@@ -1,12 +1,14 @@
+/* A printed spine: keeps its own colours in both themes. Width and height are set inline. */
 .spine {
-  width: 5em;
-  height: 29.6em;
+  position: relative;
   border-radius: 0.2em;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   padding: 0.8em 0 0.9em;
+  background-color: var(--bg);
+  color: var(--fg);
   background-image: var(--grain);
   background-size: 24em;
   background-blend-mode: multiply;
@@ -16,6 +18,67 @@
     inset 0.2em 0 0 rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
+
+/* tapes that have sat in a shop window for years */
+.faded {
+  filter: saturate(0.8) sepia(0.12) brightness(1.03);
+}
+
+/* ---------------------------------------------------------------- shared parts */
+
+.title {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1em 0;
+  overflow: hidden;
+}
+
+.title span {
+  writing-mode: vertical-rl;
+  font-family: var(--display);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.36em;
+  max-width: 100%;
+}
+
+.brand {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.52em;
+  line-height: 1.15;
+  letter-spacing: 0.16em;
+  text-align: center;
+  padding: 0 0.4em;
+}
+
+.vhs {
+  font-family: var(--display);
+  font-size: 1.1em;
+  line-height: 1;
+  padding: 0.18em 0.27em 0.09em;
+  border: 0.09em solid currentColor;
+}
+
+.year {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.62em;
+  letter-spacing: 0.12em;
+}
+
+/* ---------------------------------------------------------------- classic */
 
 .mark {
   width: 3em;
@@ -42,74 +105,236 @@
   height: 1em;
 }
 
-.title {
-  flex: 1;
-  min-height: 0;
+/* ---------------------------------------------------------------- band */
+
+.band .band {
+  flex: none;
+  width: 100%;
+  height: 6.4em;
+  margin-top: -0.8em;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1em 0;
-  overflow: hidden;
+  background: var(--accent);
+  color: var(--bg);
 }
 
-.title span {
+.catalogue {
   writing-mode: vertical-rl;
-  font-family: var(--display);
-  line-height: 1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.foot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.brand {
   font-family: var(--sans);
   font-weight: 700;
-  font-size: 0.6em;
+  font-size: 0.58em;
   letter-spacing: 0.18em;
 }
 
-.vhs {
-  font-family: var(--display);
-  font-size: 1.1em;
-  line-height: 1;
-  padding: 0.18em 0.27em 0.09em;
-  border: 0.09em solid currentColor;
-  margin-top: 0.36em;
+.band .title span {
+  font-family: var(--serif);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
+/* ---------------------------------------------------------------- split */
+
+.split {
+  padding-bottom: 0;
+}
+
+.split .title span {
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  /* reads bottom to top, as many spines did */
+  transform: rotate(180deg);
+}
+
+.lower {
+  flex: none;
+  width: 100%;
+  height: 8.6em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5em;
+  padding-bottom: 0.9em;
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ---------------------------------------------------------------- stack */
+
+.logo {
+  flex: none;
+  width: 2.6em;
+  height: 2.6em;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 0.14em solid var(--accent);
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 1em;
+  line-height: 1;
+  padding-top: 0.15em;
+}
+
+.stackTitle {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18em;
+  padding: 0 0.25em;
+  font-family: var(--sans);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.stack .year {
+  margin-bottom: 0.8em;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- outline */
+
+.topStripes {
+  flex: none;
+  width: 100%;
+  height: 4.2em;
+  margin-top: -0.8em;
+  background: repeating-linear-gradient(180deg, var(--accent) 0 0.45em, transparent 0.45em 0.9em);
+}
+
+.outline .title span {
+  color: transparent;
+  -webkit-text-stroke: 0.05em var(--fg);
+  letter-spacing: 0.04em;
+}
+
+/* ---------------------------------------------------------------- edge */
+
+.edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-left: 0.42em solid var(--accent);
+  border-right: 0.42em solid var(--accent);
+  pointer-events: none;
+}
+
+.lozenge {
+  flex: none;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.5em;
+  letter-spacing: 0.14em;
+  padding: 0.55em 0.8em 0.45em;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.edge .title span {
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* ---------------------------------------------------------------- store stickers */
+
+.dot {
+  flex: none;
+  width: 1.9em;
+  height: 1.9em;
+  margin: 0.2em 0 0.7em;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 0.12em rgba(0, 0, 0, 0.12),
+    0 0.05em 0.12em rgba(0, 0, 0, 0.35);
+}
+
+.label {
+  flex: none;
+  align-self: stretch;
+  height: 3.4em;
+  margin: 0.4em 0.9em 1.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.5em;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  background: #f4f1e8;
+  color: #18171a;
+  transform: rotate(-2deg);
+  box-shadow: 0 0.1em 0.25em rgba(0, 0, 0, 0.35);
+}
+
+.barcode {
+  padding: 0.6em 0.7em;
+  background:
+    repeating-linear-gradient(
+        90deg,
+        #18171a 0 0.14em,
+        transparent 0.14em 0.32em,
+        #18171a 0.32em 0.5em,
+        transparent 0.5em 0.62em
+      )
+      content-box,
+    #f4f1e8;
+}
+
+/* ---------------------------------------------------------------- colour schemes */
+
 .ink {
-  background-color: #1d1c19;
-  color: #efe7d6;
+  --bg: #1d1c19;
+  --fg: #efe7d6;
   --accent: #d2452d;
 }
 .cream {
-  background-color: #e4d9c3;
-  color: #18171a;
+  --bg: #e4d9c3;
+  --fg: #18171a;
   --accent: #1f3fb0;
 }
 .cobalt {
-  background-color: #1f3fb0;
-  color: #f1eadb;
+  --bg: #1f3fb0;
+  --fg: #f1eadb;
   --accent: #f1eadb;
 }
 .red {
-  background-color: #b83a26;
-  color: #f3ead8;
+  --bg: #b83a26;
+  --fg: #f3ead8;
   --accent: #1d1c19;
 }
 .forest {
-  background-color: #22463a;
-  color: #ede4cf;
+  --bg: #22463a;
+  --fg: #ede4cf;
   --accent: #d9b35a;
 }
 .mustard {
-  background-color: #c9a24a;
-  color: #18171a;
+  --bg: #c9a24a;
+  --fg: #18171a;
   --accent: #b83a26;
+}
+.brown {
+  --bg: #5a3b26;
+  --fg: #efdcc0;
+  --accent: #e08a3c;
+}
+.teal {
+  --bg: #1e5f66;
+  --fg: #eaf0ea;
+  --accent: #f2c94c;
+}
+.plum {
+  --bg: #4a2340;
+  --fg: #f2e4ea;
+  --accent: #e5739a;
 }

@@ -1,16 +1,80 @@
+/*
+ * Two rooms for the same tapes. The spines and covers are printed objects and keep their own
+ * colours in both; only the store around them changes.
+ *
+ * Light, "matinee": the shop in daylight. Grey-green lino floor, pine shelf boards, cobalt signage.
+ * Dark, "after hours": the shop after closing, lit by a CRT. Blue-black room, tape-label off-white
+ * text, and the cobalt turns into screen-glow blue so it still reads.
+ *
+ * The theme is set on <html data-theme> by the inline script in layout.tsx, before first paint.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --paper: #d4d7cd;
+  --sheet: #e2e4dc;
+  --ink: #15181a;
+  --muted: #4f554f;
+  --rule: rgba(21, 24, 26, 0.85);
+  --hairline: rgba(21, 24, 26, 0.14);
+
+  --cobalt: #2340b0;
+  --cobalt-hover: #1a3191;
+  --on-cobalt: #f1f2ec;
+  --cobalt-tint: #dce2fa;
+  --vermilion: #c8402a;
+
+  --ledge: #b8a688;
+  --placeholder: #c3c7bc;
+  --shadow-rgb: 24, 20, 12;
+  --grain-opacity: 0.4;
+
+  /* the director's back room: always the dark panel of the page */
+  --panel: #1c2023;
+  --panel-edge: transparent;
+  --on-panel: #e8e7de;
+  --on-panel-soft: #d0d0c6;
+  --on-panel-muted: #a6aaa2;
+  --panel-accent: #a9b8f0;
+  --panel-ledge: #353a3c;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #13161c;
+  --sheet: #1b1f27;
+  --ink: #e8e4d8;
+  --muted: #9a9b95;
+  --rule: rgba(232, 228, 216, 0.5);
+  --hairline: rgba(232, 228, 216, 0.12);
+
+  --cobalt: #8ea4ff;
+  --cobalt-hover: #b1c0ff;
+  --on-cobalt: #0e1220;
+  --cobalt-tint: #34406e;
+  --vermilion: #ff6b4f;
+
+  --ledge: #3a3128;
+  --placeholder: #20252e;
+  --shadow-rgb: 0, 0, 0;
+  --grain-opacity: 0.1;
+
+  --panel: #0b0d11;
+  --panel-edge: rgba(232, 228, 216, 0.1);
+  --on-panel: #e8e4d8;
+  --on-panel-soft: #c9c6bb;
+  --on-panel-muted: #9a9b95;
+  --panel-accent: #8ea4ff;
+  --panel-ledge: #262a31;
+}
+
 :root {
-  --paper: #edebe6;
-  --sheet: #f4f2ed;
-  --ink: #141414;
-  --muted: #6d6a63;
-  --cobalt: #1f3fb0;
-  --cobalt-light: #9fb2f2;
-  --vermilion: #d2452d;
-  --rule: rgba(20, 20, 20, 0.9);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --grain: url("/grain.svg");
 
-  --sans: var(--font-inter-tight), var(--font-noto-jp), system-ui, sans-serif;
+  --sans: var(--font-inter-tight), system-ui, sans-serif;
   --serif: var(--font-newsreader), Georgia, serif;
   --display: var(--font-instrument), Georgia, serif;
 
@@ -44,16 +108,20 @@ body {
   overflow-x: hidden;
 }
 
-/* paper grain over everything */
+/*
+ * Paper grain over everything. It is a see-through texture drawn normally, not blended: a
+ * full-screen fixed layer with a blend mode makes the browser re-blend the whole screen on
+ * every scroll frame, which made smooth scrolling stutter.
+ */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 40;
   pointer-events: none;
-  mix-blend-mode: multiply;
-  opacity: 0.35;
-  background-image: var(--grain);
+  opacity: var(--grain-opacity);
+  background-image: url("/grain-overlay.svg");
+  transform: translateZ(0);
   background-size: 240px;
 }
 
@@ -140,17 +208,18 @@ ol {
 
 .btn:hover {
   background: var(--cobalt);
-  color: #fff;
+  color: var(--on-cobalt);
 }
 
 .btn-solid {
   background: var(--cobalt);
-  color: #fff;
+  color: var(--on-cobalt);
 }
 
 .btn-solid:hover {
-  background: #17318f;
-  color: #fff;
+  background: var(--cobalt-hover);
+  border-color: var(--cobalt-hover);
+  color: var(--on-cobalt);
 }
 
 .chip {
@@ -172,9 +241,9 @@ ol {
 /* the shelf board tapes stand on */
 .ledge {
   height: 14px;
-  background: #d9d3c7;
+  background: var(--ledge);
   border-top: 1px solid var(--rule);
-  box-shadow: 0 22px 30px -20px rgba(20, 16, 10, 0.5);
+  box-shadow: 0 22px 30px -20px rgba(var(--shadow-rgb), 0.5);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -183,4 +252,11 @@ ol {
   *::after {
     transition-duration: 1ms !important;
   }
+}
+
+/* the theme switch grows the new theme as a circle; turn off the default crossfade under it */
+html[data-theme-reveal]::view-transition-old(root),
+html[data-theme-reveal]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }

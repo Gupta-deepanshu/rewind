@@ -48,6 +48,6 @@
 
 .darkLedge {
   height: 10px;
-  background: #3a3833;
-  border-top: 1px solid var(--muted);
+  background: var(--panel-ledge);
+  border-top: 1px solid var(--on-panel-muted);
 }

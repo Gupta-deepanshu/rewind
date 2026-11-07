@@ -63,14 +63,12 @@ export type AisleShelfData = {
   slug: string;
   num: string;
   name: string;
-  jp: string;
   films: FilmCard[];
 };
 
 export type DirectorShelfData = {
   slug: string;
   name: string;
-  nativeName?: string;
   active: [number, number];
   films: FilmCard[];
 };

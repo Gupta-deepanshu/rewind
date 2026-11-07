@@ -41,12 +41,6 @@
   letter-spacing: 0.3em;
 }
 
-.jp {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-}
-
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -55,12 +49,21 @@
   justify-content: center;
 }
 
+.tools {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
 @media (max-width: 767px) {
   .header {
     gap: 16px;
   }
   .mark {
     font-size: 28px;
+  }
+  .tools {
+    flex: 1 1 100%;
   }
   .nav {
     order: 3;

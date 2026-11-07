@@ -33,7 +33,11 @@
 .box {
   font-size: 17px;
   transform: rotate(-3deg);
-  box-shadow: 0 44px 60px -30px rgba(20, 16, 10, 0.6);
+}
+
+/* a box that can't turn over (no details yet) gets a plain drop shadow; FlipBox draws its own */
+.boxShadow {
+  box-shadow: 0 44px 60px -30px rgba(var(--shadow-rgb), 0.6);
   border-radius: 3px;
 }
 
@@ -89,7 +93,7 @@
 .rating {
   background: var(--cobalt);
   border-color: var(--cobalt) !important;
-  color: #fff;
+  color: var(--on-cobalt);
   gap: 8px;
   margin-left: 8px !important;
 }
@@ -103,8 +107,8 @@
   width: 299px;
   height: 568px;
   max-width: 100%;
-  background: #e2ddd2;
-  border: 1px solid rgba(20, 20, 20, 0.15);
+  background: var(--placeholder);
+  border: 1px solid var(--hairline);
   transform: rotate(-3deg);
 }
 

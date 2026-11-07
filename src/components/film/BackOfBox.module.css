@@ -19,26 +19,36 @@
   line-height: 1;
 }
 
-.jp {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--cobalt);
-}
-
-/* the cardboard back */
+/*
+ * The printed back of the case. It has its own inks rather than the page's: cream cardboard in
+ * the light theme, and in the dark theme a black sleeve printed in cream (as many tapes were),
+ * so it doesn't glow in the dark room.
+ */
 .box {
+  --ink: #141414;
+  --ink-soft: #2a2925;
+  --muted: #5e5b55;
+  --rule: rgba(20, 20, 20, 0.9);
+  --cobalt: #1f3fb0;
+  --vermilion: #d2452d;
+  --card: #e8dfcc;
+  --tone-cream: #c9bfa9;
+  --card-edge: rgba(20, 20, 20, 0.3);
+  --card-wear: rgba(80, 60, 30, 0.22);
+  --card-grain: multiply;
+  color: var(--ink);
   padding: 36px;
   display: flex;
   flex-wrap: wrap;
   gap: 36px;
-  background-color: #e8dfcc;
+  background-color: var(--card);
   background-image: var(--grain);
   background-size: 240px;
-  background-blend-mode: multiply;
+  background-blend-mode: var(--card-grain);
   box-shadow:
-    inset 0 0 0 1px rgba(20, 20, 20, 0.3),
-    inset 0 0 40px rgba(80, 60, 30, 0.22),
-    0 30px 50px -30px rgba(20, 16, 10, 0.5);
+    inset 0 0 0 1px var(--card-edge),
+    inset 0 0 40px var(--card-wear),
+    0 30px 50px -30px rgba(var(--shadow-rgb), 0.5);
 }
 
 .left {
@@ -85,7 +95,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: justify;
-  color: #2a2925;
+  color: var(--ink-soft);
 }
 
 .badges {
@@ -222,7 +232,7 @@
   background-color: var(--vermilion);
 }
 .cream {
-  background-color: #c9bfa9;
+  background-color: var(--tone-cream);
 }
 
 .name {
@@ -236,7 +246,7 @@
   font-style: italic;
   font-size: 13px;
   line-height: 1.25;
-  color: #5e5b55;
+  color: var(--muted);
 }
 
 .crew {
@@ -255,8 +265,22 @@
 }
 
 .crew dt {
-  color: #5e5b55;
+  color: var(--muted);
   align-self: center;
+}
+
+:global(html[data-theme="dark"]) .box {
+  --ink: #e8e4d8;
+  --ink-soft: #cfcbbf;
+  --muted: #a19e95;
+  --rule: rgba(232, 228, 216, 0.55);
+  --cobalt: #8ea4ff;
+  --vermilion: #ff6b4f;
+  --card: #1d1e22;
+  --tone-cream: #c9bfa9;
+  --card-edge: rgba(232, 228, 216, 0.14);
+  --card-wear: rgba(0, 0, 0, 0.55);
+  --card-grain: overlay;
 }
 
 @media (max-width: 767px) {

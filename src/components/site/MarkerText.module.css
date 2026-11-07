@@ -1,0 +1,31 @@
+.root {
+  position: relative;
+  isolation: isolate;
+}
+
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* highlighter ink goes behind the text, pens over it */
+.under {
+  z-index: -1;
+}
+
+.over {
+  z-index: 1;
+}
+
+.mark {
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

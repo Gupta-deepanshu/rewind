@@ -34,7 +34,6 @@ export function BackOfBox({ film, details }: { film: Film; details: FilmDetails 
         <h2 id="back-title" className={styles.h2}>
           The back of the box
         </h2>
-        <span className={styles.jp}>裏面</span>
       </div>
 
       <div className={styles.box}>
@@ -64,7 +63,7 @@ export function BackOfBox({ film, details }: { film: Film; details: FilmDetails 
         </div>
 
         <div className={styles.right}>
-          <span className={`lbl ${styles.kicker}`}>Starring / 出演</span>
+          <span className={`lbl ${styles.kicker}`}>Starring</span>
           <ul className={styles.cast}>
             {details.cast.map((c, i) => (
               <li key={`${c.name}-${i}`} className={styles.person}>

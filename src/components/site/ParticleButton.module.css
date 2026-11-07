@@ -1,0 +1,16 @@
+.host {
+  position: relative;
+}
+
+/* the canvas reaches past the button on every side so chips can fly clear of it */
+.burst {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Lenis from "lenis";
+import { registerLenis } from "@/lib/scroll";
 
 /**
  * Lenis smooth scrolling for the whole page.
@@ -18,7 +19,11 @@ export function SmoothScroll() {
       lerp: 0.1,
       anchors: { offset: -24 },
     });
-    return () => lenis.destroy();
+    registerLenis(lenis);
+    return () => {
+      registerLenis(null);
+      lenis.destroy();
+    };
   }, []);
 
   return null;

@@ -9,7 +9,8 @@ import {
   localStaffPicks,
 } from "./sources/local";
 import { tmdbAisles, tmdbConfigured, tmdbDailyPicks, tmdbDirectors, tmdbFilmPage, tmdbSearch } from "./sources/tmdb";
-import type { AisleShelfData, DirectorShelfData, FilmPageData, PickCard, SearchItem } from "./types";
+import type { AisleShelfData, DirectorShelfData, FilmCard, FilmPageData, PickCard, SearchItem } from "./types";
+import { spineLook } from "./vhs";
 
 /**
  * The catalog is the only thing pages talk to.
@@ -46,12 +47,30 @@ export function getTodaysPicks(): Promise<PickCard[]> {
   );
 }
 
-/** Tapes per aisle: as many as fit across the shelf without one being cut off at the edge. */
-const AISLE_TAPES = 23;
+/**
+ * An aisle holds as many tapes as fit across the shelf without one being cut off at the edge:
+ * the room of 23 standard cases. Cases come in slim, standard and wide (see spineLook), so the
+ * count varies a little. Widths are in em of the spine row (10px), gap included (6px = 0.6em).
+ */
+const STANDARD_CASE = 5;
+const GAP = 0.6;
+const AISLE_ROOM = 23 * (STANDARD_CASE + GAP);
+
+function fillShelf(films: FilmCard[]): FilmCard[] {
+  const out: FilmCard[] = [];
+  let used = 0;
+  for (const f of films) {
+    const w = spineLook(f.title, f.year).width + GAP;
+    if (used + w > AISLE_ROOM) break;
+    out.push(f);
+    used += w;
+  }
+  return out;
+}
 
 export async function getAisles(): Promise<AisleShelfData[]> {
   const aisles = await live("aisles", tmdbAisles, localAisles);
-  return aisles.map((a) => ({ ...a, films: a.films.slice(0, AISLE_TAPES) }));
+  return aisles.map((a) => ({ ...a, films: fillShelf(a.films) }));
 }
 
 export function getDirectorShelves(): Promise<DirectorShelfData[]> {

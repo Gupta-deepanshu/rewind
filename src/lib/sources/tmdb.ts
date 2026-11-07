@@ -353,13 +353,13 @@ export async function tmdbAisles(): Promise<AisleShelfData[]> {
     shelf("/discover/movie", { ...topRated, with_genres: "53|9648" }),
   ]);
   return [
-    { slug: "new-arrivals", num: "01", name: "New Arrivals", jp: "新作", films: now },
-    { slug: "drama", num: "02", name: "Drama", jp: "ドラマ", films: drama },
-    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", jp: "スリラー", films: thriller },
+    { slug: "new-arrivals", num: "01", name: "New Arrivals", films: now },
+    { slug: "drama", num: "02", name: "Drama", films: drama },
+    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", films: thriller },
   ];
 }
 
-export async function tmdbDirectors(seeds: { name: string; nativeName?: string }[]): Promise<DirectorShelfData[]> {
+export async function tmdbDirectors(seeds: { name: string }[]): Promise<DirectorShelfData[]> {
   const shelves = await Promise.all(
     seeds.map(async (seed): Promise<DirectorShelfData | undefined> => {
       const id = await findDirectorId(seed.name);
@@ -369,7 +369,6 @@ export async function tmdbDirectors(seeds: { name: string; nativeName?: string }
       return {
         slug: tmdbSlug(id, name),
         name,
-        nativeName: seed.nativeName,
         active: [films[0].year, films[films.length - 1].year],
         films,
       };

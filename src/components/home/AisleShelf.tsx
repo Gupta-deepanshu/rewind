@@ -23,7 +23,6 @@ export function AisleShelf({ aisle }: { aisle: AisleShelfData }) {
         <h2 id={`h-${aisle.slug}`} className={styles.title}>
           {aisle.name}
         </h2>
-        <span className={styles.jp}>{aisle.jp}</span>
         <span className={`lbl ${styles.count}`}>{aisle.films.length} tapes</span>
       </div>
       <SpineRow films={aisle.films} label={`${aisle.name} shelf`} />
