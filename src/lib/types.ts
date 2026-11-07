@@ -33,6 +33,8 @@ export type Film = {
   title: string;
   year: number;
   directorName?: string;
+  /** Full URL of the film's poster, when there is one. */
+  poster?: string;
   details?: FilmDetails;
 };
 
@@ -42,6 +44,7 @@ export type FilmCard = {
   title: string;
   year: number;
   directorName?: string;
+  poster?: string;
 };
 
 export type PickCard = FilmCard & {
@@ -49,7 +52,10 @@ export type PickCard = FilmCard & {
   runtime: number;
   genres: string[];
   synopsis: string;
-  staffNote: string;
+  /** The quote on the note card: the film's tagline (TMDB) or a staff note (example data). Can be empty. */
+  note: string;
+  /** The small line under the note: why this film is on today's shelf. */
+  reason: string;
   starring: string[];
 };
 

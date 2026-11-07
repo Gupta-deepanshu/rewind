@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter_Tight, Instrument_Serif, Newsreader, Noto_Sans_JP } from "next/font/google";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { SmoothScroll } from "@/components/site/SmoothScroll";
+import "lenis/dist/lenis.css";
 import "./globals.css";
 
 const interTight = Inter_Tight({
@@ -43,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={fonts}>
       <body>
+        <SmoothScroll />
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />

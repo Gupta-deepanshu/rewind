@@ -34,7 +34,12 @@ async function tmdb<T>(path: string, params: Record<string, string | number> = {
   if (token) headers.authorization = `Bearer ${token}`;
   else url.searchParams.set("api_key", process.env.TMDB_API_KEY ?? "");
 
+  const started = Date.now();
   const res = await fetch(url, { headers });
+  if (process.env.NODE_ENV === "development") {
+    // Shows each real TMDB call in the terminal running `npm run dev`. Cached answers don't call TMDB, so they don't print.
+    console.log(`[tmdb] ${res.status} ${path} (${Date.now() - started}ms)`);
+  }
   if (res.status === 404) throw new TmdbNotFound(path);
   if (!res.ok) throw new Error(`TMDB ${path} answered ${res.status}`);
   return (await res.json()) as T;
@@ -47,7 +52,11 @@ type RawMovie = {
   title: string;
   release_date?: string;
   vote_count?: number;
+  poster_path?: string | null;
 };
+
+/** Poster URL at a size that stays sharp on the film page's big box on retina screens. */
+const posterUrl = (m: RawMovie) => (m.poster_path ? `${IMG}/w500${m.poster_path}` : undefined);
 
 type RawPage = { results: RawMovie[] };
 
@@ -95,18 +104,6 @@ async function movieOrNull(id: number): Promise<RawDetails | null> {
   }
 }
 
-async function movie(id: number): Promise<RawDetails> {
-  const m = await movieOrNull(id);
-  if (!m) throw new Error(`TMDB has no film ${id}`);
-  return m;
-}
-
-async function findMovieId(title: string, year: number): Promise<number | undefined> {
-  "use cache";
-  cacheLife("weeks");
-  const page = await tmdb<RawPage>("/search/movie", { query: title, year, include_adult: "false" });
-  return page.results[0]?.id;
-}
 
 async function list(path: string, params: Record<string, string | number>): Promise<RawMovie[]> {
   "use cache";
@@ -147,6 +144,7 @@ const toCard = (m: RawMovie, directorName?: string): FilmCard => ({
   title: m.title,
   year: yearOf(m),
   directorName,
+  poster: posterUrl(m),
 });
 
 const cards = (movies: RawMovie[]) => movies.filter((m) => yearOf(m) > 0).map((m) => toCard(m));
@@ -200,6 +198,7 @@ function toFilm(m: RawDetails, staffNote?: string): Film {
     title: m.title,
     year: yearOf(m),
     directorName: directors.map((d) => d.name).join(" & ") || undefined,
+    poster: posterUrl(m),
     details: {
       originalTitle: m.original_title && m.original_title !== m.title ? m.original_title : undefined,
       runtime: m.runtime ?? 0,
@@ -235,23 +234,102 @@ async function directed(personId: number): Promise<{ name: string; films: FilmCa
 
 /* ---------- what the catalog asks for ---------- */
 
-export async function tmdbStaffPicks(seeds: { title: string; year: number; staffNote: string }[]): Promise<PickCard[]> {
+/** A small seeded random number generator (mulberry32): the same seed gives the same sequence. */
+function seededRandom(seed: string): () => number {
+  let a = 0;
+  for (let i = 0; i < seed.length; i++) a = (Math.imul(a, 31) + seed.charCodeAt(i)) | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle<T>(xs: T[], rand: () => number): T[] {
+  const out = [...xs];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+const TOP_RATED_PICKS = 5;
+const TRENDING_PICKS = 3;
+const TOP_RATED_PAGES = 25; // the top 500 films
+
+/**
+ * Today's picks, chosen automatically: 5 from TMDB's top-rated films (spread across decades)
+ * and 3 from this week's trending films.
+ *
+ * The date seeds the random choice, so everyone sees the same 8 films all day. The result is
+ * cached for an hour; after midnight (UTC) the next refresh picks a new set.
+ */
+export async function tmdbDailyPicks(): Promise<PickCard[]> {
+  "use cache";
+  cacheLife("hours");
+
+  const day = new Date().toISOString().slice(0, 10);
+  const rand = seededRandom(day);
+  const pageA = 1 + Math.floor(rand() * TOP_RATED_PAGES);
+  const pageB = 1 + ((pageA + Math.floor(rand() * (TOP_RATED_PAGES - 1))) % TOP_RATED_PAGES);
+
+  const [topA, topB, trending] = await Promise.all([
+    list("/movie/top_rated", { page: pageA }),
+    list("/movie/top_rated", { page: pageB }),
+    list("/trending/movie/week", {}),
+  ]);
+
+  // top-rated: prefer one film per decade so the shelf mixes eras
+  const chosen: { movie: RawMovie; from: "top" | "trending" }[] = [];
+  const taken = new Set<number>();
+  const decades = new Set<number>();
+  const topPool = shuffle([...topA, ...topB], rand).filter((m) => yearOf(m) > 0);
+  for (const pass of [true, false]) {
+    for (const m of topPool) {
+      if (chosen.length >= TOP_RATED_PICKS) break;
+      const decade = Math.floor(yearOf(m) / 10) * 10;
+      if (taken.has(m.id) || (pass && decades.has(decade))) continue;
+      chosen.push({ movie: m, from: "top" });
+      taken.add(m.id);
+      decades.add(decade);
+    }
+  }
+  // trending: only films that are out and have some votes
+  for (const m of shuffle(trending, rand)) {
+    if (chosen.length >= TOP_RATED_PICKS + TRENDING_PICKS) break;
+    if (taken.has(m.id) || yearOf(m) === 0 || (m.vote_count ?? 0) < 50) continue;
+    chosen.push({ movie: m, from: "trending" });
+    taken.add(m.id);
+  }
+
   const picks = await Promise.all(
-    seeds.map(async (seed): Promise<PickCard | undefined> => {
-      const id = await findMovieId(seed.title, seed.year);
-      if (!id) return undefined;
-      const film = toFilm(await movie(id), seed.staffNote);
+    shuffle(chosen, rand).map(async ({ movie: m, from }): Promise<PickCard | undefined> => {
+      const raw = await movieOrNull(m.id);
+      if (!raw) return undefined;
+      const film = toFilm(raw);
       const d = film.details!;
+      const votes = d.voteCount ? `${d.voteCount.toLocaleString("en")} viewers` : "";
+      const rated = d.rating !== undefined && votes ? `rated ${d.rating.toFixed(1)} / 10 by ${votes}` : "";
+      const reason =
+        from === "trending"
+          ? ["Trending this week", rated].filter(Boolean).join(" · ")
+          : [rated && rated[0].toUpperCase() + rated.slice(1), `one of the best-loved films of the ${Math.floor(film.year / 10) * 10}s`]
+              .filter(Boolean)
+              .join(" · ");
       return {
         slug: film.slug,
         title: film.title,
         year: film.year,
         directorName: film.directorName,
+        poster: film.poster,
         originalTitle: d.originalTitle,
         runtime: d.runtime,
         genres: d.genres,
         synopsis: d.synopsis,
-        staffNote: seed.staffNote,
+        note: d.tagline,
+        reason,
         starring: d.cast.slice(0, 2).map((c) => c.name),
       };
     }),
@@ -259,17 +337,25 @@ export async function tmdbStaffPicks(seeds: { title: string; year: number; staff
   return picks.filter((p): p is PickCard => Boolean(p));
 }
 
+/** A TMDB page holds only 20 films, so each shelf reads two pages; the catalog trims it to fit. */
+async function shelf(path: string, params: Record<string, string | number>) {
+  const pages = await Promise.all([1, 2].map((page) => list(path, { ...params, page })));
+  const seen = new Set<number>();
+  const movies = pages.flat().filter((m) => !seen.has(m.id) && Boolean(seen.add(m.id)));
+  return cards(movies);
+}
+
 export async function tmdbAisles(): Promise<AisleShelfData[]> {
   const topRated = { sort_by: "vote_average.desc", "vote_count.gte": 2500 };
   const [now, drama, thriller] = await Promise.all([
-    list("/movie/now_playing", { page: 1 }),
-    list("/discover/movie", { ...topRated, with_genres: "18" }),
-    list("/discover/movie", { ...topRated, with_genres: "53|9648" }),
+    shelf("/movie/now_playing", {}),
+    shelf("/discover/movie", { ...topRated, with_genres: "18" }),
+    shelf("/discover/movie", { ...topRated, with_genres: "53|9648" }),
   ]);
   return [
-    { slug: "new-arrivals", num: "01", name: "New Arrivals", jp: "新作", films: cards(now) },
-    { slug: "drama", num: "02", name: "Drama", jp: "ドラマ", films: cards(drama) },
-    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", jp: "スリラー", films: cards(thriller) },
+    { slug: "new-arrivals", num: "01", name: "New Arrivals", jp: "新作", films: now },
+    { slug: "drama", num: "02", name: "Drama", jp: "ドラマ", films: drama },
+    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", jp: "スリラー", films: thriller },
   ];
 }
 

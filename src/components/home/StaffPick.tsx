@@ -336,10 +336,10 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
     .join(" / ");
 
   return (
-    <section id="staff-picks" className={`page ${styles.hero}`} aria-label="Staff picks">
+    <section id="todays-picks" className={`page ${styles.hero}`} aria-label="Today's picks">
       <div className={styles.info}>
         <div className={styles.head}>
-          <span className={`lbl ${styles.kicker}`}>Staff pick / 今日のおすすめ</span>
+          <span className={`lbl ${styles.kicker}`}>Today’s pick / 今日のおすすめ</span>
           <button type="button" className="lbl chip" onClick={() => controls.current?.random()}>
             ↻ Another pick
           </button>
@@ -360,8 +360,14 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
           </dd>
         </dl>
         <figure className={styles.note}>
-          <MaskText as="blockquote" className={styles.quote} text={`“${pick.staffNote}”`} dir={dir} />
-          <figcaption className="lbl">— Why we picked it</figcaption>
+          {/* the film's tagline as the quote; if it has none, the reason takes its place */}
+          <MaskText as="blockquote" className={styles.quote} text={pick.note ? `“${pick.note}”` : pick.reason} dir={dir} />
+          <MaskText
+            as="figcaption"
+            className={`lbl ${styles.reason}`}
+            text={`— ${pick.note ? pick.reason : "Today’s pick"}`}
+            dir={dir}
+          />
         </figure>
         <div className={styles.actions}>
           <Link className="lbl btn btn-solid" href={`/films/${pick.slug}`}>
@@ -374,10 +380,11 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
         <div className={styles.window}>
           <div
             ref={shelfRef}
+            data-lenis-prevent-horizontal
             className={styles.shelf}
             tabIndex={0}
             role="group"
-            aria-label="Staff picks shelf. Use the left and right arrow keys to browse and Enter to open the film."
+            aria-label="Today's picks shelf. Use the left and right arrow keys to browse and Enter to open the film."
             onKeyDown={(e) => {
               if (e.key === "ArrowLeft") controls.current?.step(-1);
               else if (e.key === "ArrowRight") controls.current?.step(1);
@@ -403,7 +410,14 @@ export function StaffPick({ picks }: { picks: PickCard[] }) {
                       <Spine title={f.title} />
                     </div>
                     <div className={`${styles.face} ${styles.cover}`}>
-                      <Cover title={f.title} year={f.year} directorName={f.directorName} />
+                      <Cover
+                        title={f.title}
+                        year={f.year}
+                        directorName={f.directorName}
+                        poster={f.poster}
+                        sizes="240px"
+                        eager
+                      />
                     </div>
                   </div>
                 );

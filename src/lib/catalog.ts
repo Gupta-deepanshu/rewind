@@ -7,9 +7,8 @@ import {
   localFilmPage,
   localSearch,
   localStaffPicks,
-  localStaffSeeds,
 } from "./sources/local";
-import { tmdbAisles, tmdbConfigured, tmdbDirectors, tmdbFilmPage, tmdbSearch, tmdbStaffPicks } from "./sources/tmdb";
+import { tmdbAisles, tmdbConfigured, tmdbDailyPicks, tmdbDirectors, tmdbFilmPage, tmdbSearch } from "./sources/tmdb";
 import type { AisleShelfData, DirectorShelfData, FilmPageData, PickCard, SearchItem } from "./types";
 
 /**
@@ -34,20 +33,25 @@ async function live<T>(what: string, fromTmdb: () => Promise<T>, fromExample: ()
   }
 }
 
-export function getStaffPicks(): Promise<PickCard[]> {
+/** Today's 8 picks: chosen automatically from TMDB each day, or the hand-picked example set. */
+export function getTodaysPicks(): Promise<PickCard[]> {
   return live(
-    "staff picks",
+    "today's picks",
     async () => {
-      const picks = await tmdbStaffPicks(localStaffSeeds());
-      if (picks.length === 0) throw new Error("no staff picks found on TMDB");
+      const picks = await tmdbDailyPicks();
+      if (picks.length === 0) throw new Error("no picks found on TMDB");
       return picks;
     },
     localStaffPicks,
   );
 }
 
-export function getAisles(): Promise<AisleShelfData[]> {
-  return live("aisles", tmdbAisles, localAisles);
+/** Tapes per aisle: as many as fit across the shelf without one being cut off at the edge. */
+const AISLE_TAPES = 23;
+
+export async function getAisles(): Promise<AisleShelfData[]> {
+  const aisles = await live("aisles", tmdbAisles, localAisles);
+  return aisles.map((a) => ({ ...a, films: a.films.slice(0, AISLE_TAPES) }));
 }
 
 export function getDirectorShelves(): Promise<DirectorShelfData[]> {
@@ -82,7 +86,7 @@ export async function getFilmPage(slug: string): Promise<FilmPageData | undefine
 /** Film pages to build ahead of time. Others are built on their first visit. */
 export async function getPrebuiltSlugs(): Promise<string[]> {
   if (dataSource() === "tmdb") {
-    const picks = await getStaffPicks();
+    const picks = await getTodaysPicks();
     return picks.map((p) => p.slug);
   }
   return localAllSlugs();

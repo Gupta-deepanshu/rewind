@@ -13,8 +13,8 @@ export function SiteHeader() {
         </span>
       </Link>
       <nav aria-label="Main" className={styles.nav}>
-        <Link className="lbl" href="/#staff-picks">
-          Staff Picks
+        <Link className="lbl" href="/#todays-picks">
+          Today’s Picks
         </Link>
         <Link className="lbl" href="/#aisles">
           Aisles
