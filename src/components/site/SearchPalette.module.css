@@ -2,7 +2,7 @@
 .root {
   position: relative;
   height: 44px;
-  width: 340px;
+  width: 280px;
 }
 
 .panel {
@@ -19,6 +19,14 @@
 .panel[data-open] {
   background: var(--sheet);
   box-shadow: 0 24px 44px -20px rgba(var(--shadow-rgb), 0.5);
+}
+
+/* the field is narrow in the header; open, the panel widens over the buttons beside it */
+@media (min-width: 768px) {
+  .panel[data-open] {
+    right: auto;
+    width: 420px;
+  }
 }
 
 .bar {
@@ -76,7 +84,7 @@
 }
 
 .list {
-  max-height: 340px;
+  max-height: min(460px, 70vh);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 4px 0 6px;

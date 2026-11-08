@@ -1,0 +1,37 @@
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  padding-bottom: 8px;
+  scroll-margin-top: 24px;
+}
+
+.sign {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--rule);
+  margin: -1px 0 0 -1px;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.sign:hover {
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+}
+
+.num {
+  opacity: 0.6;
+}
+
+.current {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.current:hover {
+  background: var(--ink);
+  color: var(--paper);
+}

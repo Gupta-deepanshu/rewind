@@ -79,3 +79,16 @@
     font-size: 40px;
   }
 }
+
+/* the "their page" link on the dark panel: light outline instead of cobalt */
+.visit {
+  height: 44px;
+  border-color: var(--on-panel);
+  color: var(--on-panel);
+}
+
+.visit:hover,
+.visit:focus-visible {
+  background: var(--on-panel);
+  color: var(--panel);
+}

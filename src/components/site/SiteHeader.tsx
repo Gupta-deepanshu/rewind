@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { GlitchText } from "./GlitchText";
+import { HeaderNav } from "./HeaderNav";
 import { SearchPalette } from "./SearchPalette";
+import { SurpriseButton } from "./SurpriseButton";
 import { ThemeSwitch } from "./ThemeSwitch";
 import styles from "./SiteHeader.module.css";
 
@@ -15,19 +17,10 @@ export function SiteHeader() {
           <span className="lbl">Film Database</span>
         </span>
       </Link>
-      <nav aria-label="Main" className={styles.nav}>
-        <Link className="lbl" href="/#todays-picks">
-          Today’s Picks
-        </Link>
-        <Link className="lbl" href="/#aisles">
-          Aisles
-        </Link>
-        <Link className="lbl" href="/#directors">
-          Directors
-        </Link>
-      </nav>
+      <HeaderNav />
       <div className={styles.tools}>
         <SearchPalette />
+        <SurpriseButton />
         <ThemeSwitch />
       </div>
     </header>

@@ -4,8 +4,10 @@
  * The site's search: a command palette in the header, adapted from KokonutUI's Command Palette
  * (MIT, https://kokonutui.com/docs/navigation/action-search-bar) for this site's CSS modules.
  *
- * - Films come live from /api/search (TMDB when connected, otherwise the example data).
- * - "Jump to" sections of the homepage and a theme switch are matched locally with fuzzy search.
+ * - Films, people and box sets come live from /api/search (TMDB when connected, otherwise the
+ *   example data), in one request.
+ * - "Jump to" the browsing pages and homepage sections, and a theme switch, are matched locally
+ *   with fuzzy search.
  * - Films opened from here are remembered (in this browser) and shown under "Recent".
  * - ⌘K / Ctrl+K opens it from anywhere on the page, and so does "/" when not typing elsewhere.
  */
@@ -24,15 +26,24 @@ import {
   useSyncExternalStore,
 } from "react";
 import { scrollToId } from "@/lib/scroll";
-import type { SearchItem } from "@/lib/types";
+import type { SearchBoxSet, SearchItem, SearchPerson } from "@/lib/types";
 import { readTheme, switchTheme } from "./ThemeSwitch";
 import styles from "./SearchPalette.module.css";
 
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
 const RECENT_KEY = "rewind-recent";
 const RECENT_LIMIT = 4;
+/* With people or box sets also matching, fewer films, so every section fits without scrolling. */
+const MIXED_LIMITS = { films: 4, people: 3, boxSets: 2 };
 
-/* The homepage's sections. The aisle slugs match the ones in lib/sources (tmdb.ts and local.ts). */
+/* The browsing pages, then the homepage's sections (the aisle slugs match lib/sources). */
+const PAGES = [
+  { href: "/aisles", label: "All aisles", keywords: ["genre", "browse", "aisle"] },
+  { href: "/decades", label: "Decades", keywords: ["era", "year", "decade", "80s", "90s"] },
+  { href: "/box-sets", label: "Box sets", keywords: ["collection", "trilogy", "series", "franchise"] },
+  { href: "/new", label: "New arrivals & coming soon", keywords: ["new", "upcoming", "cinema", "release"] },
+];
+
 const JUMPS = [
   { id: "todays-picks", label: "Today’s picks", keywords: ["home", "pick", "featured"] },
   { id: "aisle-new-arrivals", label: "Aisle 01 New Arrivals", keywords: ["new", "recent", "latest"] },
@@ -94,8 +105,8 @@ function matchItem(label: string, keywords: string[], query: string) {
 
 /* ------------------------------------------------------------------ rows */
 
-type Kind = "film" | "recent" | "jump" | "theme";
-/** One row; exactly one of film / section / theme says what choosing it does. */
+type Kind = "film" | "recent" | "person" | "boxset" | "jump" | "theme";
+/** One row; exactly one of film / href / section / theme says what choosing it does. */
 type Row = {
   key: string;
   kind: Kind;
@@ -103,6 +114,8 @@ type Row = {
   meta?: string;
   matches: number[];
   film?: SearchItem;
+  /** a page to open: a person, a box set or a browsing page */
+  href?: string;
   section?: string;
   theme?: "light" | "dark";
 };
@@ -151,6 +164,20 @@ function RowIcon({ kind }: { kind: Kind }) {
         <svg {...common} aria-hidden="true">
           <circle cx="8" cy="8" r="6" />
           <path d="M8 4.8V8l2.2 1.5" strokeLinecap="round" />
+        </svg>
+      );
+    case "person": // head and shoulders
+      return (
+        <svg {...common} aria-hidden="true">
+          <circle cx="8" cy="5.6" r="2.6" />
+          <path d="M2.8 14c.6-2.9 2.6-4.4 5.2-4.4s4.6 1.5 5.2 4.4" strokeLinecap="round" />
+        </svg>
+      );
+    case "boxset": // a slipcase with tapes standing in it
+      return (
+        <svg {...common} aria-hidden="true">
+          <rect x="2" y="3" width="12" height="10.5" rx="0.5" />
+          <path d="M5 5.5v6M8 5.5v6M11 5.5v6" strokeLinecap="round" />
         </svg>
       );
     case "jump": // shelves
@@ -213,6 +240,8 @@ export function SearchPalette() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [results, setResults] = useState<SearchItem[]>([]);
+  const [people, setPeople] = useState<SearchPerson[]>([]);
+  const [boxSets, setBoxSets] = useState<SearchBoxSet[]>([]);
   const [loading, setLoading] = useState(false);
   const [recent, setRecent] = useState<SearchItem[]>([]);
   const [dark, setDark] = useState(false);
@@ -242,8 +271,10 @@ export function SearchPalette() {
       setLoading(true);
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-        const data = (await res.json()) as { results: SearchItem[] };
+        const data = (await res.json()) as { results: SearchItem[]; people?: SearchPerson[]; boxSets?: SearchBoxSet[] };
         setResults(data.results);
+        setPeople(data.people ?? []);
+        setBoxSets(data.boxSets ?? []);
         setActive(0);
       } catch {
         // aborted or offline: keep what we had
@@ -272,6 +303,8 @@ export function SearchPalette() {
     setOpen(false);
     setQuery("");
     setResults([]);
+    setPeople([]);
+    setBoxSets([]);
     setActive(0);
     const target = returnFocus.current;
     returnFocus.current = null;
@@ -322,7 +355,8 @@ export function SearchPalette() {
 
     const out: Section[] = [];
     if (q.length >= 2) {
-      const films = results.map<Row>((f) => ({
+      const mixed = people.length > 0 || boxSets.length > 0;
+      const films = (mixed ? results.slice(0, MIXED_LIMITS.films) : results).map<Row>((f) => ({
         key: `film-${f.slug}`,
         kind: "film",
         label: f.title,
@@ -336,6 +370,34 @@ export function SearchPalette() {
         rows: films,
         note: films.length === 0 ? (loading ? "Checking the shelves…" : `No tapes on the shelf for “${q}”.`) : undefined,
       });
+      if (people.length) {
+        out.push({
+          key: "people",
+          label: "People",
+          rows: people.slice(0, mixed ? MIXED_LIMITS.people : undefined).map((p) => ({
+            key: `person-${p.slug}`,
+            kind: "person",
+            label: p.name,
+            meta: p.knownTitles || p.knownFor,
+            matches: fuzzyMatch(p.name, q)?.matches ?? [],
+            href: `/people/${p.slug}`,
+          })),
+        });
+      }
+      if (boxSets.length) {
+        out.push({
+          key: "boxsets",
+          label: "Box sets",
+          rows: boxSets.slice(0, MIXED_LIMITS.boxSets).map((b) => ({
+            key: `boxset-${b.slug}`,
+            kind: "boxset",
+            label: b.name,
+            meta: "Box set",
+            matches: fuzzyMatch(b.name, q)?.matches ?? [],
+            href: `/box-sets/${b.slug}`,
+          })),
+        });
+      }
     } else if (recent.length > 0 && !q) {
       out.push({
         key: "recent",
@@ -345,6 +407,10 @@ export function SearchPalette() {
     }
 
     const jumps: { row: Row; score: number }[] = [];
+    for (const p of PAGES) {
+      const hit = matchItem(p.label, p.keywords, q);
+      if (hit) jumps.push({ score: hit.score, row: { key: p.href, kind: "jump", label: p.label, matches: hit.matches, href: p.href } });
+    }
     for (const j of JUMPS) {
       const hit = matchItem(j.label, j.keywords, q);
       if (hit) jumps.push({ score: hit.score, row: { key: j.id, kind: "jump", label: j.label, matches: hit.matches, section: j.id } });
@@ -356,14 +422,17 @@ export function SearchPalette() {
     if (themeHit) out.push({ key: "actions", label: "Actions", rows: [{ key: "theme", kind: "theme", label: theme.label, matches: themeHit.matches, theme: nextTheme }] });
 
     return out;
-  }, [q, results, loading, recent, dark]);
+  }, [q, results, people, boxSets, loading, recent, dark]);
 
-  /** Does what a row says: open a film, glide to a homepage section, or switch theme. */
+  /** Does what a row says: open a film or a page, glide to a homepage section, or switch theme. */
   const runRow = (row: Row) => {
     if (row.film) {
       saveRecent(row.film);
       closePalette(false);
       router.push(`/films/${row.film.slug}`);
+    } else if (row.href) {
+      closePalette(false);
+      router.push(row.href);
     } else if (row.section) {
       closePalette(false);
       if (!(pathname === "/" && scrollToId(row.section))) router.push(`/#${row.section}`);
@@ -469,7 +538,7 @@ export function SearchPalette() {
             <path d="M10.4 10.4 14 14" strokeLinecap="round" />
           </svg>
           <label htmlFor={inputId} className="sr-only">
-            Search films, or jump to a shelf
+            Search films, people and box sets, or jump to a shelf
           </label>
           <input
             ref={inputRef}
@@ -479,7 +548,7 @@ export function SearchPalette() {
             autoComplete="off"
             spellCheck={false}
             className={styles.input}
-            placeholder="Search films"
+            placeholder="Search films & people"
             value={query}
             aria-expanded={open}
             aria-controls={open ? listboxId : undefined}

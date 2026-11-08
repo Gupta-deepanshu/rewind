@@ -1,0 +1,20 @@
+.head {
+  animation: swap 0.4s var(--ease);
+}
+
+@keyframes swap {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+.body {
+  padding-top: 32px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head {
+    animation: none;
+  }
+}
