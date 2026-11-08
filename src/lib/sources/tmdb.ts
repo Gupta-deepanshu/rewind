@@ -647,8 +647,7 @@ const decadeShelf = async (decade: number, sort: AisleSort, extra: Record<string
 export async function tmdbDecadePage(decade: number): Promise<DecadePageData> {
   "use cache";
   cacheLife("hours");
-  // the full decade: "the 20s" would mean both the 1920s and the 2020s
-  const label = `the ${decade}s`;
+  const label = `the ${String(decade).slice(2)}s`;
   const [best, popular, ...genres] = await Promise.all([
     decadeShelf(decade, "top"),
     decadeShelf(decade, "popular"),

@@ -165,7 +165,7 @@ export function localDecadePage(decade: number): DecadePageData {
   return {
     decade,
     shelves: onShelf.length
-      ? [{ slug: "all", kicker: "On the shelf", title: `Everything from the ${decade}s`, films: onShelf }]
+      ? [{ slug: "all", kicker: "On the shelf", title: `Everything from the ${String(decade).slice(2)}s`, films: onShelf }]
       : [],
   };
 }
