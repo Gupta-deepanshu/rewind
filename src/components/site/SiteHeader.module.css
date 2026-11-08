@@ -2,7 +2,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px 40px;
+  gap: 20px 32px;
   padding-top: 22px;
   padding-bottom: 22px;
   border-bottom: 1px solid var(--rule);
@@ -44,15 +44,54 @@
 .nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 28px;
+  gap: 8px 22px;
   flex: 1;
   justify-content: center;
+}
+
+/* the section you're in: cobalt, with a rule under it */
+.navLink {
+  position: relative;
+  padding: 6px 0;
+}
+
+.navLink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: currentColor;
+  scale: 0 1;
+  transform-origin: left;
+  transition: scale 0.35s var(--ease);
+}
+
+.navLink[aria-current] {
+  color: var(--cobalt);
+}
+
+.navLink[aria-current]::after {
+  scale: 1 1;
 }
 
 .tools {
   display: flex;
   align-items: stretch;
   gap: 8px;
+}
+
+/* below this the links get their own row, under the logo and tools */
+@media (max-width: 1099px) {
+  .nav {
+    order: 3;
+    justify-content: flex-start;
+    flex-basis: 100%;
+  }
+  .tools {
+    margin-left: auto;
+  }
 }
 
 @media (max-width: 767px) {

@@ -1,0 +1,37 @@
+/* bays of shelving: each box set stands on its own length of ledge, and the ledges meet in a row */
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  column-gap: 0;
+  row-gap: 56px;
+  padding-top: 40px;
+}
+
+.bay {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.set {
+  align-self: center;
+  display: block;
+  font-size: 6.5px;
+  padding: 0 12px;
+  color: inherit;
+  transition: transform 0.45s var(--ease);
+}
+
+.set:hover,
+.set:focus-visible {
+  transform: translateY(-12px) rotate(-1deg);
+  color: inherit;
+}
+
+.empty {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--muted);
+  padding-top: 40px;
+}

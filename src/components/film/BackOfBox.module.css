@@ -294,3 +294,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.nameLink {
+  color: inherit;
+}
+
+.nameLink:hover {
+  color: var(--cobalt);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

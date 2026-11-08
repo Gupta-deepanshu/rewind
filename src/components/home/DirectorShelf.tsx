@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { DirectorShelfData } from "@/lib/types";
 import { ParticleButton } from "../site/ParticleButton";
+import { SlideLink } from "../site/SlideLink";
 import { SpineRow } from "../vhs/SpineRow";
 import styles from "./DirectorShelf.module.css";
 
@@ -41,6 +42,12 @@ export function DirectorShelf({ directors }: { directors: DirectorShelfData[] })
             <ParticleButton className={`lbl ${styles.another}`} onClick={another}>
               ↻ Another director
             </ParticleButton>
+            <SlideLink
+              className={styles.visit}
+              href={`/people/${director.slug}`}
+              text="Their page"
+              hoverText={`All of ${director.name.split(" ")[0]} →`}
+            />
           </div>
         </div>
         <div className={styles.shelf}>

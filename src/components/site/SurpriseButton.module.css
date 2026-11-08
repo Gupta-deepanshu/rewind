@@ -1,0 +1,68 @@
+/* matches the theme switch beside it */
+.button {
+  height: 44px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  user-select: none;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.button[aria-busy="true"] {
+  cursor: progress;
+}
+
+.die {
+  flex: none;
+  transition: rotate 0.4s var(--ease);
+}
+
+.button:hover .die {
+  rotate: 90deg;
+}
+
+.rolling {
+  animation: roll 0.5s linear infinite;
+}
+
+@keyframes roll {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* on narrower screens the header has no room for the words: just the die (the words stay for screen readers) */
+@media (max-width: 1439px) {
+  .button {
+    width: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+  .text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rolling {
+    animation: none;
+  }
+  .button:hover .die {
+    rotate: none;
+  }
+}

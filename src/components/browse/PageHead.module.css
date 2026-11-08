@@ -1,0 +1,66 @@
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 18px;
+}
+
+.crumb {
+  display: inline-flex;
+  gap: 10px;
+}
+
+.crumbs :global(.lbl) {
+  color: var(--muted);
+}
+
+.crumbs a:global(.lbl):hover {
+  color: var(--cobalt);
+}
+
+.crumbs .here {
+  color: var(--ink);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  padding-top: 48px;
+  padding-bottom: 8px;
+}
+
+.kicker {
+  color: var(--cobalt);
+}
+
+.title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(48px, 6.4vw, 92px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.meta {
+  color: var(--muted);
+}
+
+.lede {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.5;
+  max-width: 52ch;
+}
+
+@media (max-width: 767px) {
+  .lede {
+    font-size: 18px;
+  }
+}
+
+.visual {
+  max-width: 100%;
+  overflow: hidden;
+}

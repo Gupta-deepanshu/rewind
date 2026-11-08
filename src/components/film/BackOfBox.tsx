@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ART, vhsLook } from "@/lib/vhs";
 import type { Film, FilmDetails } from "@/lib/types";
 import { CoverArt } from "../vhs/Cover";
@@ -74,7 +75,13 @@ export function BackOfBox({ film, details }: { film: Film; details: FilmDetails 
                     <div className={styles.silhouette} aria-hidden="true" />
                   )}
                 </div>
-                <span className={styles.name}>{c.name}</span>
+                {c.slug ? (
+                  <Link href={`/people/${c.slug}`} className={`${styles.name} ${styles.nameLink}`}>
+                    {c.name}
+                  </Link>
+                ) : (
+                  <span className={styles.name}>{c.name}</span>
+                )}
                 <span className={styles.role}>as {c.character}</span>
               </li>
             ))}

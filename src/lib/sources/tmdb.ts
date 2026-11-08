@@ -1,15 +1,28 @@
 import { cacheLife } from "next/cache";
+import { BOX_SET_SEEDS, DECADE_GENRES, GENRE_AISLES, genreAisleById, genreAisleBySlug } from "../data/browse";
 import { tmdbSlug } from "../slug";
 import type {
   AisleShelfData,
+  AislePageData,
+  AisleSort,
+  ArrivalCard,
+  BoxSetCard,
+  BoxSetPageData,
   CastMember,
+  CreditCard,
+  DecadePageData,
   CrewMember,
   DirectorShelfData,
   Film,
   FilmCard,
   FilmPageData,
+  NewArrivalsData,
+  PersonPageData,
   PickCard,
+  SearchBoxSet,
   SearchItem,
+  SearchPerson,
+  ShelfData,
 } from "../types";
 
 /**
@@ -20,6 +33,8 @@ import type {
  * is blocked by some internet providers. Override it with TMDB_API_BASE.
  */
 const BASE = process.env.TMDB_API_BASE ?? "https://api.tmdb.org/3";
+/** Whose cinema listings "now showing" and "coming soon" follow (ISO 3166-1 country code). */
+const REGION = process.env.TMDB_REGION ?? "US";
 const IMG = "https://image.tmdb.org/t/p";
 
 export const tmdbConfigured = () => Boolean(process.env.TMDB_READ_ACCESS_TOKEN || process.env.TMDB_API_KEY);
@@ -58,7 +73,7 @@ type RawMovie = {
 /** Poster URL at a size that stays sharp on the film page's big box on retina screens. */
 const posterUrl = (m: RawMovie) => (m.poster_path ? `${IMG}/w500${m.poster_path}` : undefined);
 
-type RawPage = { results: RawMovie[] };
+type RawPage = { results: RawMovie[]; total_pages?: number };
 
 type RawDetails = RawMovie & {
   original_title: string;
@@ -66,13 +81,14 @@ type RawDetails = RawMovie & {
   overview: string;
   tagline: string;
   runtime: number | null;
-  genres: { name: string }[];
+  genres: { id: number; name: string }[];
+  belongs_to_collection: { id: number; name: string } | null;
   vote_average: number;
   vote_count: number;
   production_companies: { name: string }[];
   spoken_languages: { iso_639_1: string; english_name: string }[];
   credits: {
-    cast: { name: string; character: string; profile_path: string | null }[];
+    cast: { id: number; name: string; character: string; profile_path: string | null }[];
     crew: { id: number; name: string; job: string; department: string }[];
   };
   videos: { results: { key: string; site: string; type: string; official: boolean }[] };
@@ -80,11 +96,21 @@ type RawDetails = RawMovie & {
   recommendations: RawPage;
 };
 
+type RawCredit = RawMovie & { character?: string; job?: string; department?: string };
+
 type RawPerson = {
   id: number;
   name: string;
-  movie_credits: { crew: (RawMovie & { job: string })[] };
+  biography: string;
+  birthday: string | null;
+  deathday: string | null;
+  place_of_birth: string | null;
+  profile_path: string | null;
+  known_for_department: string;
+  movie_credits: { cast: RawCredit[]; crew: (RawCredit & { job: string })[] };
 };
+
+type RawCollection = { id: number; name: string; overview: string; poster_path: string | null; parts: RawMovie[] };
 
 /* ---------- cached requests ---------- */
 
@@ -122,10 +148,38 @@ async function findDirectorId(name: string): Promise<number | undefined> {
   return (page.results.find((p) => p.known_for_department === "Directing") ?? page.results[0])?.id;
 }
 
-async function person(id: number): Promise<RawPerson> {
+/**
+ * A person with their film credits, or null if TMDB has no such person. The not-found check
+ * happens inside the cached function: an error thrown out of "use cache" loses its class.
+ */
+async function personOrNull(id: number): Promise<RawPerson | null> {
   "use cache";
   cacheLife("days");
-  return tmdb<RawPerson>(`/person/${id}`, { language: "en-US", append_to_response: "movie_credits" });
+  try {
+    return await tmdb<RawPerson>(`/person/${id}`, { language: "en-US", append_to_response: "movie_credits" });
+  } catch (e) {
+    if (e instanceof TmdbNotFound) return null;
+    throw e;
+  }
+}
+
+/** One page of a list, with how many pages there are (discover answers at most 500). */
+async function listPage(path: string, params: Record<string, string | number>): Promise<Required<RawPage>> {
+  "use cache";
+  cacheLife("hours");
+  const page = await tmdb<RawPage>(path, { language: "en-US", include_adult: "false", ...params });
+  return { results: page.results, total_pages: Math.min(page.total_pages ?? 1, 500) };
+}
+
+async function collectionOrNull(id: number): Promise<RawCollection | null> {
+  "use cache";
+  cacheLife("days");
+  try {
+    return await tmdb<RawCollection>(`/collection/${id}`, { language: "en-US" });
+  } catch (e) {
+    if (e instanceof TmdbNotFound) return null;
+    throw e;
+  }
 }
 
 async function searchMovies(query: string): Promise<RawMovie[]> {
@@ -185,6 +239,7 @@ function toFilm(m: RawDetails, staffNote?: string): Film {
     name: c.name,
     character: c.character || "Unnamed role",
     photo: c.profile_path ? `${IMG}/w185${c.profile_path}` : undefined,
+    slug: tmdbSlug(c.id, c.name),
   }));
   const trailers = m.videos.results.filter((v) => v.site === "YouTube" && v.type === "Trailer");
   const trailer = trailers.find((v) => v.official) ?? trailers[0];
@@ -198,7 +253,15 @@ function toFilm(m: RawDetails, staffNote?: string): Film {
     title: m.title,
     year: yearOf(m),
     directorName: directors.map((d) => d.name).join(" & ") || undefined,
+    directorSlug: directors[0] && tmdbSlug(directors[0].id, directors[0].name),
     poster: posterUrl(m),
+    boxSet: m.belongs_to_collection
+      ? { slug: boxSetSlug(m.belongs_to_collection), name: boxSetName(m.belongs_to_collection) }
+      : undefined,
+    aisles: m.genres.flatMap((g) => {
+      const aisle = genreAisleById(g.id);
+      return aisle ? [{ slug: aisle.slug, name: aisle.name }] : [];
+    }),
     details: {
       originalTitle: m.original_title && m.original_title !== m.title ? m.original_title : undefined,
       runtime: m.runtime ?? 0,
@@ -222,7 +285,8 @@ function toFilm(m: RawDetails, staffNote?: string): Film {
 
 /** A director's feature films, oldest first. Very obscure credits (shorts, TV bits) are left out. */
 async function directed(personId: number): Promise<{ name: string; films: FilmCard[] }> {
-  const p = await person(personId);
+  const p = await personOrNull(personId);
+  if (!p) return { name: "", films: [] };
   const seen = new Set<number>();
   const films = p.movie_credits.crew
     .filter((c) => c.job === "Director" && yearOf(c) > 0 && (c.vote_count ?? 0) >= 15)
@@ -353,9 +417,9 @@ export async function tmdbAisles(): Promise<AisleShelfData[]> {
     shelf("/discover/movie", { ...topRated, with_genres: "53|9648" }),
   ]);
   return [
-    { slug: "new-arrivals", num: "01", name: "New Arrivals", films: now },
-    { slug: "drama", num: "02", name: "Drama", films: drama },
-    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", films: thriller },
+    { slug: "new-arrivals", num: "01", name: "New Arrivals", films: now, href: "/new" },
+    { slug: "drama", num: "02", name: "Drama", films: drama, href: "/aisles/drama" },
+    { slug: "thriller-mystery", num: "03", name: "Thriller & Mystery", films: thriller, href: "/aisles/thriller" },
   ];
 }
 
@@ -391,7 +455,293 @@ export async function tmdbFilmPage(id: number): Promise<FilmPageData | undefined
   return { film, more: recs.length ? { kicker: "On the next shelf", title: "More like this", films: recs } : undefined };
 }
 
+type RawPersonHit = {
+  id: number;
+  name: string;
+  known_for_department: string;
+  popularity: number;
+  known_for?: { title?: string; media_type: string }[];
+};
+
+async function searchPeople(query: string): Promise<RawPersonHit[]> {
+  "use cache";
+  cacheLife("hours");
+  const page = await tmdb<{ results: RawPersonHit[] }>("/search/person", { query, include_adult: "false", language: "en-US" });
+  return page.results;
+}
+
+async function searchCollections(query: string): Promise<{ id: number; name: string }[]> {
+  "use cache";
+  cacheLife("hours");
+  const page = await tmdb<{ results: { id: number; name: string }[] }>("/search/collection", { query, language: "en-US" });
+  return page.results;
+}
+
+/** Below this TMDB popularity a name match is usually a namesake nobody is looking for. */
+const MIN_PERSON_POPULARITY = 0.5;
+
+/** People whose name matches, best known first. Only people known for some films. */
+export async function tmdbSearchPeople(query: string): Promise<SearchPerson[]> {
+  const results = await searchPeople(query.trim());
+  return results
+    .filter((p) => p.popularity >= MIN_PERSON_POPULARITY && (p.known_for ?? []).some((k) => k.media_type === "movie"))
+    .sort((a, b) => b.popularity - a.popularity)
+    .slice(0, 4)
+    .map((p) => ({
+      slug: tmdbSlug(p.id, p.name),
+      name: p.name,
+      knownFor: p.known_for_department,
+      knownTitles: (p.known_for ?? [])
+        .filter((k) => k.media_type === "movie" && k.title)
+        .slice(0, 2)
+        .map((k) => k.title)
+        .join(", "),
+    }));
+}
+
+/** Matching collections; the ones on the box-set wall come first. */
+export async function tmdbSearchBoxSets(query: string): Promise<SearchBoxSet[]> {
+  const results = await searchCollections(query.trim());
+  const onWall = (c: { id: number }) => BOX_SET_SEEDS.some((s) => s.id === c.id);
+  return [...results.filter(onWall), ...results.filter((c) => !onWall(c))]
+    .slice(0, 3)
+    .map((c) => ({ slug: boxSetSlug(c), name: boxSetName(c) }));
+}
+
+/**
+ * A random film from the 500 best-rated films that at least 2,000 people have rated (TMDB's own
+ * top-rated list lets in obscure films with few votes): a random page, then a film on it.
+ */
+export async function tmdbRandomFilm(): Promise<FilmCard | undefined> {
+  const page = 1 + Math.floor(Math.random() * TOP_RATED_PAGES);
+  const films = cards(await list("/discover/movie", { sort_by: "vote_average.desc", "vote_count.gte": 2000, page }));
+  return films[Math.floor(Math.random() * films.length)];
+}
+
 export async function tmdbSearch(query: string): Promise<SearchItem[]> {
   const results = await searchMovies(query.trim());
   return cards(results).slice(0, 8);
+}
+
+/* ---------- people ---------- */
+
+/** Each film once, oldest first, leaving out credits too obscure to have a page worth visiting. */
+function filmography(credits: RawCredit[], minVotes: number, role: (c: RawCredit) => string | undefined): CreditCard[] {
+  const byFilm = new Map<number, CreditCard>();
+  for (const c of credits) {
+    if (yearOf(c) === 0 || (c.vote_count ?? 0) < minVotes) continue;
+    const existing = byFilm.get(c.id);
+    const r = role(c);
+    if (existing) {
+      if (r && existing.role && !existing.role.includes(r)) existing.role += ` / ${r}`;
+      continue;
+    }
+    byFilm.set(c.id, { ...toCard(c), role: r });
+  }
+  return [...byFilm.values()].sort((a, b) => a.year - b.year || a.title.localeCompare(b.title));
+}
+
+const SHELF_ORDER: Record<string, PersonPageData["shelves"][number]["id"][]> = {
+  Directing: ["directed", "wrote", "acted"],
+  Writing: ["wrote", "directed", "acted"],
+};
+
+export async function tmdbPersonPage(id: number): Promise<PersonPageData | undefined> {
+  const p = await personOrNull(id);
+  if (!p) return undefined;
+  const crew = p.movie_credits.crew;
+  const shelves = {
+    directed: { id: "directed" as const, title: "Directed", films: filmography(crew.filter((c) => c.job === "Director"), 5, () => undefined) },
+    wrote: {
+      id: "wrote" as const,
+      title: "Wrote",
+      films: filmography(crew.filter((c) => c.department === "Writing"), 5, (c) => c.job),
+    },
+    acted: {
+      id: "acted" as const,
+      title: "Acted in",
+      films: filmography(p.movie_credits.cast, 20, (c) => c.character || undefined),
+    },
+  };
+  const order = SHELF_ORDER[p.known_for_department] ?? ["acted", "directed", "wrote"];
+  return {
+    slug: tmdbSlug(p.id, p.name),
+    name: p.name,
+    photo: p.profile_path ? `${IMG}/w342${p.profile_path}` : undefined,
+    knownFor: p.known_for_department,
+    born: p.birthday ?? undefined,
+    died: p.deathday ?? undefined,
+    birthplace: p.place_of_birth ?? undefined,
+    bio: p.biography || undefined,
+    shelves: order.map((k) => shelves[k]).filter((s) => s.films.length > 0),
+  };
+}
+
+/* ---------- aisles and decades ---------- */
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** Discover filters for a sort order, optionally inside one decade. */
+function discoverParams(sort: AisleSort, decade?: number): Record<string, string | number> {
+  const from = decade ? `${decade}-01-01` : undefined;
+  const to = decade ? `${decade + 9}-12-31` : undefined;
+  const until = to && to < today() ? to : today();
+  // older decades have far fewer votes on TMDB, so the bar for "top rated" comes down
+  const minVotes = decade && decade < 1960 ? 150 : 600;
+  const base = { ...(from && { "primary_release_date.gte": from }), "primary_release_date.lte": until };
+  if (sort === "popular") return { ...base, sort_by: "popularity.desc", "vote_count.gte": 50 };
+  if (sort === "newest") return { ...base, sort_by: "primary_release_date.desc", "vote_count.gte": 30 };
+  return { ...base, sort_by: "vote_average.desc", "vote_count.gte": minVotes };
+}
+
+/** Tapes on each aisle page: enough to fill two full shelves. TMDB pages hold 20. */
+const TAPES_PER_PAGE = 45;
+const TMDB_PAGE_SIZE = 20;
+const MAX_AISLE_PAGES = 25;
+
+// These read today's date (for "released by today"), so the whole answer is cached, as with tmdbDailyPicks.
+export async function tmdbAislePage(slug: string, sort: AisleSort, decade: number | undefined, page: number): Promise<AislePageData | undefined> {
+  "use cache";
+  cacheLife("hours");
+  const index = GENRE_AISLES.findIndex((g) => g.slug === slug);
+  if (index < 0) return undefined;
+  const genre = GENRE_AISLES[index];
+  const params = { ...discoverParams(sort, decade), with_genres: genre.id };
+  // the TMDB pages this aisle page's 45 tapes fall on (two or three of them)
+  const start = (page - 1) * TAPES_PER_PAGE;
+  const first = Math.floor(start / TMDB_PAGE_SIZE) + 1;
+  const last = Math.floor((start + TAPES_PER_PAGE - 1) / TMDB_PAGE_SIZE) + 1;
+  const pages = await Promise.all(
+    Array.from({ length: last - first + 1 }, (_, i) => listPage("/discover/movie", { ...params, page: first + i })),
+  );
+  const seen = new Set<number>();
+  const skip = start - (first - 1) * TMDB_PAGE_SIZE;
+  const movies = pages
+    .flatMap((p) => p.results)
+    .slice(skip, skip + TAPES_PER_PAGE)
+    .filter((m) => !seen.has(m.id) && Boolean(seen.add(m.id)));
+  return {
+    aisle: { slug: genre.slug, name: genre.name, num: String(index + 1).padStart(2, "0") },
+    films: cards(movies),
+    page,
+    totalPages: Math.min(MAX_AISLE_PAGES, Math.ceil((pages[0].total_pages * TMDB_PAGE_SIZE) / TAPES_PER_PAGE)),
+  };
+}
+
+/** One shelf per aisle: the aisle's best-rated films. */
+export async function tmdbAisleIndex(): Promise<ShelfData[]> {
+  "use cache";
+  cacheLife("hours");
+  return Promise.all(
+    GENRE_AISLES.map(async (g, i) => {
+      const page = await listPage("/discover/movie", { ...discoverParams("top"), "vote_count.gte": 1500, with_genres: g.id, page: 1 });
+      const num = String(i + 1).padStart(2, "0");
+      return { slug: g.slug, kicker: `Aisle ${num}`, title: g.name, films: cards(page.results), href: `/aisles/${g.slug}` };
+    }),
+  );
+}
+
+const decadeShelf = async (decade: number, sort: AisleSort, extra: Record<string, string | number> = {}) =>
+  cards((await listPage("/discover/movie", { ...discoverParams(sort, decade), ...extra, page: 1 })).results);
+
+export async function tmdbDecadePage(decade: number): Promise<DecadePageData> {
+  "use cache";
+  cacheLife("hours");
+  const label = `the ${String(decade).slice(2)}s`;
+  const [best, popular, ...genres] = await Promise.all([
+    decadeShelf(decade, "top"),
+    decadeShelf(decade, "popular"),
+    ...DECADE_GENRES.map((slug) => decadeShelf(decade, "top", { with_genres: genreAisleBySlug(slug)!.id })),
+  ]);
+  const shelves: ShelfData[] = [
+    { slug: "best", kicker: "Best of the decade", title: `The best-loved films of ${label}`, films: best },
+    { slug: "popular", kicker: "Most rented", title: `Still popular from ${label}`, films: popular },
+    ...DECADE_GENRES.map((slug, i) => {
+      const g = genreAisleBySlug(slug)!;
+      return { slug, kicker: `Aisle ${String(GENRE_AISLES.indexOf(g) + 1).padStart(2, "0")}`, title: g.name, films: genres[i], href: `/aisles/${slug}?decade=${decade}` };
+    }),
+  ];
+  // a genre that barely existed that decade (animation in the 1930s) doesn't get a near-empty shelf
+  return { decade, shelves: shelves.filter((s) => s.films.length >= 6) };
+}
+
+/** One shelf per decade: its best-rated films. */
+export async function tmdbDecadeIndex(decades: number[]): Promise<ShelfData[]> {
+  "use cache";
+  cacheLife("hours");
+  return Promise.all(
+    decades.map(async (decade) => ({
+      slug: `${decade}s`,
+      kicker: `${decade} – ${decade + 9}`,
+      title: `The ${decade}s`,
+      films: await decadeShelf(decade, "top"),
+      href: `/decades/${decade}s`,
+    })),
+  );
+}
+
+/* ---------- box sets ---------- */
+
+/** "Back to the Future Collection" → "Back to the Future"; "Before... Collection" → "Before". */
+const cleanSetName = (name: string) => name.replace(/\s*[-–]?\s*collection$/i, "").replace(/[.…]+$/, "").trim();
+const seedName = (id: number) => BOX_SET_SEEDS.find((s) => s.id === id)?.name;
+function boxSetName(c: { id: number; name: string }) {
+  return seedName(c.id) ?? cleanSetName(c.name);
+}
+function boxSetSlug(c: { id: number; name: string }) {
+  return tmdbSlug(c.id, boxSetName(c));
+}
+
+function toBoxSet(c: RawCollection): BoxSetPageData {
+  return {
+    slug: boxSetSlug(c),
+    name: boxSetName(c),
+    overview: c.overview,
+    poster: c.poster_path ? `${IMG}/w342${c.poster_path}` : undefined,
+    // TMDB lists the parts in no fixed order, and includes films that haven't come out yet
+    films: cards(c.parts).sort((a, b) => a.year - b.year),
+  };
+}
+
+export async function tmdbBoxSets(): Promise<BoxSetCard[]> {
+  const sets = await Promise.all(BOX_SET_SEEDS.map((s) => collectionOrNull(s.id)));
+  return sets
+    .filter((c): c is RawCollection => Boolean(c))
+    .map(toBoxSet)
+    .filter((b) => b.films.length > 1)
+    .map((s): BoxSetCard => ({ slug: s.slug, name: s.name, poster: s.poster, films: s.films }));
+}
+
+export async function tmdbBoxSetPage(id: number): Promise<BoxSetPageData | undefined> {
+  const c = await collectionOrNull(id);
+  if (!c) return undefined;
+  const set = toBoxSet(c);
+  return set.films.length > 0 ? set : undefined;
+}
+
+/* ---------- new arrivals ---------- */
+
+export async function tmdbNewArrivals(): Promise<NewArrivalsData> {
+  "use cache";
+  cacheLife("hours");
+  const now = today();
+  const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  const [nextWeek, later] = [inDays(7), inDays(14)];
+  const [showing, upcoming] = await Promise.all([
+    Promise.all([1, 2].map((page) => list("/movie/now_playing", { region: REGION, page }))),
+    Promise.all([1, 2].map((page) => list("/movie/upcoming", { region: REGION, page }))),
+  ]);
+  const seen = new Set<number>();
+  const once = (m: RawMovie) => !seen.has(m.id) && Boolean(seen.add(m.id));
+  const nowShowing = cards(showing.flat().filter(once).filter((m) => (m.release_date ?? "") <= now));
+  const comingSoon: ArrivalCard[] = upcoming
+    .flat()
+    .filter((m) => (m.release_date ?? "") > now)
+    .filter(once)
+    .map((m): ArrivalCard => {
+      const date = m.release_date!;
+      return { ...toCard(m), date, week: date < nextWeek ? "this" : date < later ? "next" : "later" };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
+  return { nowShowing, comingSoon };
 }
