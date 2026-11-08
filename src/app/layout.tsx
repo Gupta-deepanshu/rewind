@@ -31,6 +31,12 @@ export const metadata: Metadata = {
     template: "%s — Rewind",
   },
   description: "A film database shelved on VHS. Browse films, casts and directors one tape at a time.",
+  other: {
+    // The site has its own light and dark themes. This tells the Dark Reader extension to leave it
+    // alone instead of recolouring it on top of them (https://github.com/darkreader/darkreader).
+    // (any content works; Next drops a meta tag whose content is empty)
+    "darkreader-lock": "true",
+  },
 };
 
 /** The saved theme, or the system setting when nothing is saved. Key matches THEME_KEY in ThemeSwitch. */
