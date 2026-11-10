@@ -25,6 +25,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { askHref, MAX_QUERY_LENGTH } from "@/lib/ai-search/query";
 import { scrollToId } from "@/lib/scroll";
 import type { SearchBoxSet, SearchItem, SearchPerson } from "@/lib/types";
 import { readTheme, switchTheme } from "./ThemeSwitch";
@@ -42,6 +43,7 @@ const PAGES = [
   { href: "/decades", label: "Decades", keywords: ["era", "year", "decade", "80s", "90s"] },
   { href: "/box-sets", label: "Box sets", keywords: ["collection", "trilogy", "series", "franchise"] },
   { href: "/new", label: "New arrivals & coming soon", keywords: ["new", "upcoming", "cinema", "release"] },
+  { href: "/search/ai", label: "Ask the clerk", keywords: ["ai", "ask", "clerk", "recommend", "suggest", "help"] },
 ];
 
 const JUMPS = [
@@ -105,7 +107,7 @@ function matchItem(label: string, keywords: string[], query: string) {
 
 /* ------------------------------------------------------------------ rows */
 
-type Kind = "film" | "recent" | "person" | "boxset" | "jump" | "theme";
+type Kind = "film" | "recent" | "person" | "boxset" | "jump" | "theme" | "clerk";
 /** One row; exactly one of film / href / section / theme says what choosing it does. */
 type Row = {
   key: string;
@@ -184,6 +186,12 @@ function RowIcon({ kind }: { kind: Kind }) {
       return (
         <svg {...common} aria-hidden="true">
           <path d="M2 4.5h12M2 8h12M2 11.5h12" strokeLinecap="round" />
+        </svg>
+      );
+    case "clerk": // a speech bubble
+      return (
+        <svg {...common} aria-hidden="true">
+          <path d="M2.5 3.5h11v7h-6.5l-3 2.5v-2.5h-1.5z" strokeLinejoin="round" />
         </svg>
       );
     case "theme": // half moon
@@ -398,6 +406,12 @@ export function SearchPalette() {
           })),
         });
       }
+      // for requests a title search can't answer ("90s heist movies under two hours")
+      out.push({
+        key: "clerk",
+        label: "Ask the clerk",
+        rows: [{ key: "clerk", kind: "clerk", label: "Ask the clerk instead →", meta: `“${q.slice(0, 40)}”`, matches: [], href: askHref(q.slice(0, MAX_QUERY_LENGTH)) }],
+      });
     } else if (recent.length > 0 && !q) {
       out.push({
         key: "recent",

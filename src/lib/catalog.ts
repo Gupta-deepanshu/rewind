@@ -1,3 +1,8 @@
+import { askClerk, type ClerkAnswer } from "./ai-search/clerk";
+import { interpret, type Interpretation } from "./ai-search/interpret";
+import { RateLimiter, TtlCache } from "./ai-search/limits";
+import { modelsFromEnv } from "./ai-search/model";
+import { decodeFilters } from "./ai-search/url";
 import { BOX_SET_SEEDS, DECADES, GENRE_AISLES } from "./data/browse";
 import { DIRECTOR_SEEDS } from "./data/seeds";
 import { idFromSlug } from "./slug";
@@ -30,7 +35,11 @@ import {
   tmdbDecadeIndex,
   tmdbDecadePage,
   tmdbDirectors,
+  tmdbDiscover,
   tmdbFilmPage,
+  tmdbFindKeywords,
+  tmdbFindPeople,
+  tmdbGenreList,
   tmdbNewArrivals,
   tmdbPersonPage,
   tmdbRandomFilm,
@@ -301,4 +310,40 @@ export function searchFilms(query: string): Promise<SearchItem[]> {
     () => tmdbSearch(query),
     () => localSearch(query),
   );
+}
+
+/* ---------- ask the clerk (AI search) ---------- */
+
+/** Each visitor may make this many model calls a minute; cached answers don't count. */
+const CLERK_CALLS_PER_MINUTE = 10;
+/** How long an interpretation of the same words is reused. */
+const CLERK_CACHE_MS = 10 * 60_000;
+
+// per server instance: see "Known limitations" in the README
+const clerkLimiter = new RateLimiter(CLERK_CALLS_PER_MINUTE, 60_000);
+const clerkCache = new TtlCache<Interpretation>(CLERK_CACHE_MS);
+
+/**
+ * The clerk's answer for a request. `f` is the `f=` URL parameter: filters already worked out,
+ * so the model isn't asked again. `visitor` identifies the asker for the rate limit (their IP).
+ */
+export function askTheClerk(query: string, f: string | undefined, visitor: string): Promise<ClerkAnswer> {
+  const today = new Date().toISOString().slice(0, 10);
+  // every configured provider, in order: the next is asked when one is out of quota or down
+  const models = modelsFromEnv();
+  return askClerk(query, decodeFilters(f), {
+    today,
+    visitor,
+    canDiscover: tmdbConfigured(),
+    limiter: clerkLimiter,
+    cache: clerkCache,
+    interpret: (q) =>
+      interpret(q, {
+        models,
+        today,
+        lookups: { genres: tmdbGenreList, people: (name) => tmdbFindPeople(name), keywords: (term) => tmdbFindKeywords(term) },
+      }),
+    discover: (params) => tmdbDiscover(params),
+    titleSearch: searchFilms,
+  });
 }

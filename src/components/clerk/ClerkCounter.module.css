@@ -1,0 +1,94 @@
+/* the counter top: a sheet on the desk, standing on the same pine ledge as the shelves */
+.counter {
+  padding-top: 28px;
+}
+
+.desk {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+}
+
+.label {
+  color: var(--cobalt);
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  font-family: var(--serif);
+  font-size: 20px;
+  border-radius: 0;
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.ask {
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.ask:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.ask:disabled:hover {
+  background: var(--cobalt);
+  border-color: var(--cobalt);
+}
+
+.hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.searching {
+  color: var(--cobalt);
+}
+
+.near {
+  color: var(--vermilion);
+}
+
+@media (max-width: 767px) {
+  .desk {
+    padding: 18px 16px 16px;
+  }
+  .row {
+    flex-direction: column;
+  }
+  .ask {
+    justify-content: center;
+  }
+  .input {
+    /* stacked, flex: 1 would set the height (to nothing) instead of the width */
+    flex: none;
+    font-size: 18px;
+  }
+}

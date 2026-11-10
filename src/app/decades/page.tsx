@@ -28,7 +28,7 @@ export default async function DecadesPage() {
           films={s.films}
           count="Best loved"
           href={s.href}
-          linkText={`Open the ${s.slug.slice(2)}`}
+          linkText={`Open the ${s.slug}`}
         />
       ))}
     </>
