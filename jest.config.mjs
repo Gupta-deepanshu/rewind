@@ -18,4 +18,21 @@ const config = {
   collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.d.ts", "!src/components/reactbits/**", "!src/lib/data/details.ts"],
 };
 
-export default createJestConfig(config);
+/**
+ * The Vercel AI SDK and its dependencies ship only as ES modules, which Jest (CommonJS) can't
+ * load as they are. next/jest leaves node_modules untransformed, so these packages are let
+ * through its ignore pattern and compiled by SWC like our own code.
+ */
+const ESM_PACKAGES = ["ai", "@ai-sdk", "@standard-schema", "@workflow", "@vercel/oidc", "eventsource-parser"];
+
+export default async function jestConfig() {
+  const resolved = await createJestConfig(config)();
+  const esm = ESM_PACKAGES.map((p) => p.replace("/", "[\\\\/]")).join("|");
+  return {
+    ...resolved,
+    transformIgnorePatterns: [
+      `/node_modules/(?!(${esm})[\\\\/])(?!.pnpm)(?!(geist|next/dist/client|next/dist/shared/lib|next/src/client|next/src/shared/lib)/)`,
+      ...resolved.transformIgnorePatterns.filter((p) => !p.startsWith("/node_modules/(?!.pnpm)")),
+    ],
+  };
+}

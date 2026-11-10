@@ -1,5 +1,6 @@
 import { cacheLife } from "next/cache";
 import { BOX_SET_SEEDS, DECADE_GENRES, GENRE_AISLES, genreAisleById, genreAisleBySlug } from "../data/browse";
+import type { PersonCandidate } from "../ai-search/tools";
 import { tmdbSlug } from "../slug";
 import type {
   AisleShelfData,
@@ -745,4 +746,68 @@ export async function tmdbNewArrivals(): Promise<NewArrivalsData> {
     })
     .sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
   return { nowShowing, comingSoon };
+}
+
+/* ---------- lookups for the clerk (AI search) ---------- */
+
+/** TMDB's movie genres. They hardly ever change. */
+export async function tmdbGenreList(): Promise<{ id: number; name: string }[]> {
+  "use cache";
+  cacheLife("weeks");
+  const res = await tmdb<{ genres: { id: number; name: string }[] }>("/genre/movie/list", { language: "en-US" });
+  return res.genres;
+}
+
+/**
+ * People who might be meant by a name, best known first, with what they're known for so the
+ * model can tell namesakes apart. Unlike tmdbSearchPeople this keeps people known for TV too:
+ * an actor's films can still be found by their id.
+ */
+export async function tmdbFindPeople(name: string, limit = 5): Promise<PersonCandidate[]> {
+  const results = await searchPeople(name.trim());
+  return results
+    .filter((p) => p.popularity >= MIN_PERSON_POPULARITY)
+    .sort((a, b) => b.popularity - a.popularity)
+    .slice(0, limit)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      knownFor: p.known_for_department,
+      knownTitles: (p.known_for ?? []).flatMap((k) => (k.title ? [k.title] : [])).slice(0, 3),
+    }));
+}
+
+async function searchKeywords(query: string): Promise<{ id: number; name: string }[]> {
+  "use cache";
+  cacheLife("days");
+  const page = await tmdb<{ results: { id: number; name: string }[] }>("/search/keyword", { query });
+  return page.results;
+}
+
+/** TMDB keywords matching a term ("heist" → heist, heist movie…). Exact matches first. */
+export async function tmdbFindKeywords(term: string, limit = 8): Promise<{ id: number; name: string }[]> {
+  const t = term.trim().toLowerCase();
+  const results = await searchKeywords(t);
+  const exact = results.filter((k) => k.name.toLowerCase() === t);
+  return [...exact, ...results.filter((k) => k.name.toLowerCase() !== t)].slice(0, limit);
+}
+
+type RawDiscover = { results: RawMovie[]; total_results?: number };
+
+async function discoverPage(params: Record<string, string | number>, page: number): Promise<RawDiscover> {
+  "use cache";
+  cacheLife("hours");
+  return tmdb<RawDiscover>("/discover/movie", { language: "en-US", include_adult: "false", ...params, page });
+}
+
+/** A discover search: the first `pages` pages of films (20 each), and how many match in all. */
+export async function tmdbDiscover(params: Record<string, string | number>, pages = 2): Promise<{ films: FilmCard[]; total: number }> {
+  const first = await discoverPage(params, 1);
+  const total = first.total_results ?? first.results.length;
+  // only the pages that exist: a search with 25 matches has two pages, not `pages`
+  const needed = Math.min(pages, Math.ceil(total / TMDB_PAGE_SIZE)) - 1;
+  const more = await Promise.all(Array.from({ length: Math.max(0, needed) }, (_, i) => discoverPage(params, i + 2)));
+  const seen = new Set<number>();
+  const movies = [first, ...more].flatMap((p) => p.results).filter((m) => !seen.has(m.id) && Boolean(seen.add(m.id)));
+  return { films: cards(movies), total };
 }

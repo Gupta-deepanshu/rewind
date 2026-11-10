@@ -7,7 +7,11 @@ import {
   tmdbAislePage,
   tmdbBoxSetPage,
   tmdbDecadePage,
+  tmdbDiscover,
   tmdbFilmPage,
+  tmdbFindKeywords,
+  tmdbFindPeople,
+  tmdbGenreList,
   tmdbNewArrivals,
   tmdbPersonPage,
   tmdbRandomFilm,
@@ -376,5 +380,67 @@ describe("tmdbRandomFilm", () => {
     expect(q.get("vote_count.gte")).toBe("2000");
     expect(q.get("page")).toBe("13"); // 1 + floor(0.5 * 25)
     expect(film?.slug).toBe("1310-film-1310"); // the middle film of that page
+  });
+});
+
+/* ---------- lookups for the clerk (AI search) ---------- */
+
+describe("tmdbGenreList", () => {
+  it("returns TMDB's genres", async () => {
+    serve({ "/genre/movie/list": () => ({ genres: [{ id: 80, name: "Crime" }] }) });
+    expect(await tmdbGenreList()).toEqual([{ id: 80, name: "Crime" }]);
+  });
+});
+
+describe("tmdbFindPeople", () => {
+  it("returns ids with what each person is known for, best known first, without namesakes", async () => {
+    serve({
+      "/search/person": () => ({
+        results: [
+          { id: 1, name: "Michael Caine", known_for_department: "Acting", popularity: 0.1, known_for: [] }, // a namesake
+          { id: 3895, name: "Michael Caine", known_for_department: "Acting", popularity: 9, known_for: [{ title: "The Prestige", media_type: "movie" }, { name: "A TV show", media_type: "tv" }] },
+          { id: 2, name: "Michael Caine Jr", known_for_department: "Acting", popularity: 1, known_for: [] },
+        ],
+      }),
+    });
+    expect(await tmdbFindPeople(" Michael Caine ")).toEqual([
+      { id: 3895, name: "Michael Caine", knownFor: "Acting", knownTitles: ["The Prestige"] },
+      { id: 2, name: "Michael Caine Jr", knownFor: "Acting", knownTitles: [] },
+    ]);
+    expect(calls[0].searchParams.get("query")).toBe("Michael Caine");
+  });
+});
+
+describe("tmdbFindKeywords", () => {
+  it("puts the exact match first and caps the list", async () => {
+    serve({
+      "/search/keyword": () => ({
+        results: [{ id: 207268, name: "heist movie" }, { id: 10051, name: "Heist" }, ...Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: `heist ${i}` }))],
+      }),
+    });
+    const found = await tmdbFindKeywords("heist");
+    expect(found.slice(0, 2)).toEqual([{ id: 10051, name: "Heist" }, { id: 207268, name: "heist movie" }]);
+    expect(found).toHaveLength(8);
+  });
+});
+
+describe("tmdbDiscover", () => {
+  it("passes the filters through and reads two pages when there are more", async () => {
+    serve({ "/discover/movie": (q) => ({ ...listPage(Number(q.get("page"))), total_results: 300 }) });
+    const { films, total } = await tmdbDiscover({ with_genres: "80", "vote_count.gte": 200 });
+    expect(total).toBe(300);
+    expect(films).toHaveLength(40);
+    expect(calls.map((c) => c.searchParams.get("page"))).toEqual(["1", "2"]);
+    expect(calls[0].searchParams.get("with_genres")).toBe("80");
+    expect(calls[0].searchParams.get("include_adult")).toBe("false");
+  });
+
+  it("stops at one page when that is all there is, and reports zero results", async () => {
+    serve({ "/discover/movie": () => ({ results: [movie(1, "Only One", "1995-01-01")], total_results: 1 }) });
+    expect((await tmdbDiscover({})).films).toHaveLength(1);
+    expect(calls).toHaveLength(1);
+
+    serve({ "/discover/movie": () => ({ results: [], total_results: 0 }) });
+    expect(await tmdbDiscover({})).toEqual({ films: [], total: 0 });
   });
 });

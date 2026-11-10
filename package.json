@@ -9,13 +9,18 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "eval": "tsx --require ./evals/next-cache-stub.cjs --env-file=.env.local evals/clerk.eval.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.114",
+    "@ai-sdk/groq": "^4.0.80",
+    "ai": "^7.0.166",
     "lenis": "^1.3.27",
     "next": "16.4.4",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -32,6 +37,7 @@
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

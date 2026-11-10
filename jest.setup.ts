@@ -1,4 +1,9 @@
 import "@testing-library/jest-dom";
+import { TextDecoder, TextEncoder } from "node:util";
+
+// Every browser and Node has these, but jsdom doesn't (the clerk's URL filters use them).
+globalThis.TextEncoder ??= TextEncoder as typeof globalThis.TextEncoder;
+globalThis.TextDecoder ??= TextDecoder as typeof globalThis.TextDecoder;
 
 // Browser APIs jsdom doesn't have, used by the tab indicator and reduced-motion checks.
 if (typeof window !== "undefined") {

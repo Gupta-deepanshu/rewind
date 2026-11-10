@@ -3,6 +3,7 @@
  * @jest-environment node
  */
 import {
+  askTheClerk,
   dataSource,
   getAisleIndex,
   getAislePage,
@@ -185,5 +186,14 @@ describe("surprise me", () => {
   it("picks a film that has a page", async () => {
     const pick = await getRandomFilm();
     expect(await getFilmPage(pick.slug)).toBeDefined();
+  });
+});
+
+describe("askTheClerk", () => {
+  it("without keys, searches the example shelf by title and never calls a model", async () => {
+    const answer = await askTheClerk("samurai", undefined, "1.2.3.4");
+    expect(answer.mode).toBe("keyword");
+    expect(answer.notice).toMatch(/isn't connected/);
+    expect(answer.films.map((f) => f.title)).toContain("Seven Samurai");
   });
 });
