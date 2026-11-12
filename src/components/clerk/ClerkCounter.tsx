@@ -64,7 +64,6 @@ export function ClerkCounter({ initialQuery = "" }: { initialQuery?: string }) {
           {left <= 40 && <span className={left <= 10 ? styles.near : undefined}>{left} left</span>}
         </p>
       </div>
-      <div className="ledge" aria-hidden="true" />
     </form>
   );
 }

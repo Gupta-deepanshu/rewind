@@ -1,4 +1,4 @@
-/* the counter top: a sheet on the desk, standing on the same pine ledge as the shelves */
+/* the counter top: a sheet on the desk, edged in the same cobalt as the clerk's answer slip */
 .counter {
   padding-top: 28px;
 }
@@ -10,7 +10,7 @@
   padding: 22px 24px 18px;
   background: var(--sheet);
   border: 1px solid var(--rule);
-  border-bottom: 0;
+  border-bottom: 3px solid var(--cobalt);
 }
 
 .label {
